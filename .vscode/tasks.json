@@ -1,0 +1,16 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Compile and Run GTKMM",
+            "type": "shell",
+            "command": "./compile_and_run_gtkmm.sh",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "detail": "Compile base.cc and run the resulting executable"
+        }
+    ]
+}

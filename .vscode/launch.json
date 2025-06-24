@@ -1,0 +1,30 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        
+        {
+            "name": "Debug GTKMM Application",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/fc",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "preLaunchTask": "Compile and Run GTKMM",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "miDebuggerPath": "/opt/homebrew/bin/lldb-mi", // Adjust this path if necessary
+            "logging": {
+                "engineLogging": true
+            }
+        }
+    ]
+}
