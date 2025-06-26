@@ -63,3 +63,17 @@ std::vector<Exercise> DatabaseManager::fetch_exercises(const std::string& query)
     PQclear(res);
     return exercises;
 }
+
+bool DatabaseManager::insert_exercise_pose(int exercise_id, int keypoint_index, float x, float y, float confidence, int frame_number) {
+    if (!conn) return false;
+    std::ostringstream oss;
+    oss << "INSERT INTO exercise_poses (exercise_id, keypoint_index, x, y, confidence, frame_number) VALUES ("
+        << exercise_id << ", " << keypoint_index << ", " << x << ", " << y << ", " << confidence << ", " << frame_number << ");";
+    PGresult* res = PQexec(conn, oss.str().c_str());
+    bool success = PQresultStatus(res) == PGRES_COMMAND_OK;
+    if (!success) {
+        std::cerr << "Failed to insert pose data: " << PQerrorMessage(conn) << std::endl;
+    }
+    PQclear(res);
+    return success;
+}

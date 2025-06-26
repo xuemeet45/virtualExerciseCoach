@@ -380,6 +380,14 @@ bool PoseDetectionWindow::update_frame() {
                             }
                             std::cout << std::endl;
                             
+                            // After pose detection and keypoints extraction, insert pose data for each keypoint
+                            for (int i = 0; i < num_keypoints; ++i) {
+                                float x = output_data[i * keypoint_size];
+                                float y = output_data[i * keypoint_size + 1];
+                                float confidence = output_data[i * keypoint_size + 2];
+                                global_db_manager->insert_exercise_pose(exercise.get_id(), i, x, y, confidence, frame_number);
+                            }
+                            
                         } else if (output_tensor->type == kTfLiteUInt8) {
                             std::cout << "Processing quantized output tensor" << std::endl;
                             uint8_t* output_data = output_tensor->data.uint8;

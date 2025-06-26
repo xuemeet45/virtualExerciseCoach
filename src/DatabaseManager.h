@@ -13,6 +13,7 @@ public:
     ~DatabaseManager();
 
     std::vector<Exercise> fetch_exercises(const std::string& query);
+    bool insert_exercise_pose(int exercise_id, int keypoint_index, float x, float y, float confidence, int frame_number);
 
 private:
     PGconn *conn;
