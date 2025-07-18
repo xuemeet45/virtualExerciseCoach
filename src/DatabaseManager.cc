@@ -1,6 +1,7 @@
 #include "DatabaseManager.h"
 #include <iostream>
 #include <sstream>
+#include <array>
 
 DatabaseManager* global_db_manager = nullptr;
 
@@ -76,4 +77,40 @@ bool DatabaseManager::insert_exercise_pose(int exercise_id, int keypoint_index, 
     }
     PQclear(res);
     return success;
+}
+
+bool DatabaseManager::insert_reference_pose(int exercise_id, int keypoint_index, float x, float y, float confidence, int frame_number) {
+    if (!conn) return false;
+    std::ostringstream oss;
+    oss << "INSERT INTO reference_poses (exercise_id, keypoint_index, x, y, confidence, frame_number) VALUES ("
+        << exercise_id << ", " << keypoint_index << ", " << x << ", " << y << ", " << confidence << ", " << frame_number << ");";
+    PGresult* res = PQexec(conn, oss.str().c_str());
+    bool success = PQresultStatus(res) == PGRES_COMMAND_OK;
+    if (!success) {
+        std::cerr << "Failed to insert reference pose: " << PQerrorMessage(conn) << std::endl;
+    }
+    PQclear(res);
+    return success;
+}
+
+std::vector<std::array<float, 3>> DatabaseManager::fetch_reference_pose(int exercise_id) {
+    std::vector<std::array<float, 3>> keypoints(17, {0, 0, 0});
+    if (!conn) return keypoints;
+    std::ostringstream oss;
+    oss << "SELECT keypoint_index, x, y, confidence FROM reference_poses WHERE exercise_id = " << exercise_id << " ORDER BY keypoint_index ASC;";
+    PGresult* res = PQexec(conn, oss.str().c_str());
+    if (PQresultStatus(res) == PGRES_TUPLES_OK) {
+        int nRows = PQntuples(res);
+        for (int i = 0; i < nRows; ++i) {
+            int idx = std::stoi(PQgetvalue(res, i, 0));
+            float x = std::stof(PQgetvalue(res, i, 1));
+            float y = std::stof(PQgetvalue(res, i, 2));
+            float conf = std::stof(PQgetvalue(res, i, 3));
+            if (idx >= 0 && idx < 17) {
+                keypoints[idx] = {x, y, conf};
+            }
+        }
+    }
+    PQclear(res);
+    return keypoints;
 }

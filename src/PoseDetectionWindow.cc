@@ -7,6 +7,15 @@
 #include <tensorflow/lite/kernels/register.h>
 #include <tensorflow/lite/model.h>
 #include <tensorflow/lite/optional_debug_tools.h>
+#include "DatabaseManager.h" // Add this include
+#include <algorithm>
+
+const char* joint_names[17] = {
+    "Nose", "Left Eye", "Right Eye", "Left Ear", "Right Ear",
+    "Left Shoulder", "Right Shoulder", "Left Elbow", "Right Elbow",
+    "Left Wrist", "Right Wrist", "Left Hip", "Right Hip",
+    "Left Knee", "Right Knee", "Left Ankle", "Right Ankle"
+};
 
 // Helper function to draw pose skeleton
 void draw_pose_skeleton(cv::Mat& frame, float* keypoints) {
@@ -71,6 +80,7 @@ PoseDetectionWindow::PoseDetectionWindow(const Exercise& exercise)
     title_label.set_markup("<big><b>" + exercise.get_name() + "</b></big>");
     status_label.set_text("Initializing camera...");
     close_button.set_label("Close");
+    record_button.set_label("Record Reference Pose");
 
     // Configure the drawing area
     drawing_area.set_size_request(640, 480);
@@ -94,6 +104,7 @@ PoseDetectionWindow::PoseDetectionWindow(const Exercise& exercise)
     main_box.append(title_label);
     main_box.append(status_label);
     main_box.append(scrolled_window);
+    main_box.append(record_button);
     main_box.append(close_button);
 
     // Connect signals
@@ -101,6 +112,7 @@ PoseDetectionWindow::PoseDetectionWindow(const Exercise& exercise)
         stop_camera();
         hide();
     });
+    record_button.signal_clicked().connect(sigc::mem_fun(*this, &PoseDetectionWindow::record_reference_pose));
 
     set_child(main_box);
     set_visible(true);
@@ -366,6 +378,65 @@ bool PoseDetectionWindow::update_frame() {
                                               cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 255), 1);
                                 }
                             }
+                            // Store last detected keypoints for recording
+                            last_detected_keypoints.clear();
+                            for (int i = 0; i < num_keypoints * keypoint_size; ++i) {
+                                last_detected_keypoints.push_back(output_data[i]);
+                            }
+                            // --- Advanced feedback: highlight incorrect joints and show per-joint feedback ---
+                            auto ref_keypoints = global_db_manager->fetch_reference_pose(exercise.get_id());
+                            bool has_reference = false;
+                            for (const auto& kp : ref_keypoints) {
+                                if (kp[2] > 0.01) { has_reference = true; break; }
+                            }
+                            std::vector<int> incorrect_joints;
+                            float total_error = 0.0f;
+                            int count = 0;
+                            if (has_reference && last_detected_keypoints.size() == 17 * 3) {
+                                for (int i = 0; i < 17; ++i) {
+                                    float user_x = last_detected_keypoints[i * 3 + 1];
+                                    float user_y = last_detected_keypoints[i * 3];
+                                    float ref_x = ref_keypoints[i][0];
+                                    float ref_y = ref_keypoints[i][1];
+                                    float dx = user_x - ref_x;
+                                    float dy = user_y - ref_y;
+                                    float dist = std::sqrt(dx * dx + dy * dy);
+                                    total_error += dist;
+                                    count++;
+                                    if (dist > 0.05) { // Threshold for incorrect joint
+                                        incorrect_joints.push_back(i);
+                                    }
+                                }
+                                float avg_error = (count > 0) ? (total_error / count) : 0.0f;
+                                // Draw keypoints with color feedback
+                                for (int i = 0; i < num_keypoints; i++) {
+                                    float y = output_data[i * keypoint_size];
+                                    float x = output_data[i * keypoint_size + 1];
+                                    float confidence = output_data[i * keypoint_size + 2];
+                                    int px = static_cast<int>(x * 640);
+                                    int py = static_cast<int>(y * 480);
+                                    cv::Point keypoint(px, py);
+                                    bool is_incorrect = std::find(incorrect_joints.begin(), incorrect_joints.end(), i) != incorrect_joints.end();
+                                    cv::Scalar color = is_incorrect ? cv::Scalar(0, 0, 255) : cv::Scalar(0, 255, 0); // Red or Green
+                                    cv::circle(frame, keypoint, 5, color, -1);
+                                    cv::putText(frame, std::to_string(i), keypoint + cv::Point(5, 5), 
+                                                cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 255), 1);
+                                }
+                                // Show per-joint feedback in the status label
+                                if (!incorrect_joints.empty()) {
+                                    std::string feedback = "Adjust: ";
+                                    for (size_t j = 0; j < incorrect_joints.size(); ++j) {
+                                        feedback += joint_names[incorrect_joints[j]];
+                                        if (j + 1 < incorrect_joints.size()) feedback += ", ";
+                                    }
+                                    status_label.set_text(feedback);
+                                } else {
+                                    status_label.set_text("Great! All joints match.");
+                                }
+                            } else if (!has_reference) {
+                                status_label.set_text("No reference pose recorded for this exercise.");
+                            }
+                            // --- End advanced feedback ---
                             // Draw skeleton connections
                             draw_pose_skeleton(frame, output_data);
                             std::cout << "Pose detection completed successfully" << std::endl;
@@ -381,13 +452,45 @@ bool PoseDetectionWindow::update_frame() {
                             std::cout << std::endl;
                             
                             // After pose detection and keypoints extraction, insert pose data for each keypoint
+                            int frame_number = 0; // Define frame_number for static pose
                             for (int i = 0; i < num_keypoints; ++i) {
                                 float x = output_data[i * keypoint_size];
                                 float y = output_data[i * keypoint_size + 1];
                                 float confidence = output_data[i * keypoint_size + 2];
                                 global_db_manager->insert_exercise_pose(exercise.get_id(), i, x, y, confidence, frame_number);
                             }
-                            
+
+                            // --- Pose comparison and feedback ---
+                            // This section is now handled by the advanced feedback logic above
+                            // auto ref_keypoints = global_db_manager->fetch_reference_pose(exercise.get_id());
+                            // bool has_reference = false;
+                            // for (const auto& kp : ref_keypoints) {
+                            //     if (kp[2] > 0.01) { has_reference = true; break; }
+                            // }
+                            // if (has_reference && last_detected_keypoints.size() == 17 * 3) {
+                            //     float total_error = 0.0f;
+                            //     int count = 0;
+                            //     for (int i = 0; i < 17; ++i) {
+                            //         float user_x = last_detected_keypoints[i * 3 + 1];
+                            //         float user_y = last_detected_keypoints[i * 3];
+                            //         float ref_x = ref_keypoints[i][0];
+                            //         float ref_y = ref_keypoints[i][1];
+                            //         float dx = user_x - ref_x;
+                            //         float dy = user_y - ref_y;
+                            //         float dist = std::sqrt(dx * dx + dy * dy);
+                            //         total_error += dist;
+                            //         count++;
+                            //     }
+                            //     float avg_error = (count > 0) ? (total_error / count) : 0.0f;
+                            //     if (avg_error < 0.05) {
+                            //         status_label.set_text("Good job! Pose matches reference.");
+                            //     } else {
+                            //         status_label.set_text("Adjust your pose to match the reference.");
+                            //     }
+                            // } else if (!has_reference) {
+                            //     status_label.set_text("No reference pose recorded for this exercise.");
+                            // }
+                            // --- End pose comparison and feedback ---
                         } else if (output_tensor->type == kTfLiteUInt8) {
                             std::cout << "Processing quantized output tensor" << std::endl;
                             uint8_t* output_data = output_tensor->data.uint8;
@@ -491,4 +594,26 @@ void PoseDetectionWindow::on_draw(const Cairo::RefPtr<Cairo::Context>& cr, int w
     Gdk::Cairo::set_source_pixbuf(cr, current_pixbuf, 0, 0);
     cr->paint();
     cr->restore();
+} 
+
+void PoseDetectionWindow::record_reference_pose() {
+    if (last_detected_keypoints.size() != 17 * 3) {
+        status_label.set_text("No valid pose detected to record.");
+        return;
+    }
+    bool all_success = true;
+    for (int i = 0; i < 17; ++i) {
+        float y = last_detected_keypoints[i * 3];
+        float x = last_detected_keypoints[i * 3 + 1];
+        float confidence = last_detected_keypoints[i * 3 + 2];
+        // frame_number = 0 for static reference pose
+        if (!global_db_manager->insert_reference_pose(exercise.get_id(), i, x, y, confidence, 0)) {
+            all_success = false;
+        }
+    }
+    if (all_success) {
+        status_label.set_text("Reference pose recorded!");
+    } else {
+        status_label.set_text("Failed to record reference pose.");
+    }
 } 
