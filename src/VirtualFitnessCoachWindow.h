@@ -13,6 +13,9 @@ class VirtualFitnessCoachWindow : public Gtk::ApplicationWindow {
 public:
     VirtualFitnessCoachWindow();
 
+    // Signal for logout request
+    sigc::signal<void()> signal_logout_request;
+
 private:
     void add_exercise_cards(const std::vector<Exercise>& exercises);
     void show_exercise_detail(const Exercise& exercise);

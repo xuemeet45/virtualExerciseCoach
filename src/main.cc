@@ -12,6 +12,13 @@ protected:
     Gtk::ApplicationWindow* create_appwindow() {
         auto window = new VirtualFitnessCoachWindow();
         add_window(*window);
+        
+        // Connect the logout signal
+        window->signal_logout_request.connect([this, window]() {
+            window->hide(); // Hide the main application window
+            show_login_window(); // Show the login window again
+        });
+        
         window->present();
         return window;
     }

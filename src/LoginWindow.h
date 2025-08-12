@@ -29,6 +29,7 @@ private:
     Gtk::Button register_button;
     Gtk::Button guest_button;
     Gtk::Label status_label;
+    Gtk::CheckButton remember_me_checkbutton; // Add remember me checkbox
 };
 
-#endif // LOGINWINDOW_H 
+#endif // LOGINWINDOW_H

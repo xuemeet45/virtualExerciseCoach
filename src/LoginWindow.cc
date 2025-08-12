@@ -7,14 +7,13 @@ LoginWindow::LoginWindow()
       form_box(Gtk::Orientation::VERTICAL) {
     
     set_title("バーチャルエクササイズコーチ - ログイン");
-    set_default_size(400, 300);
     set_modal(true);
     set_deletable(false);
-    set_resizable(false);
+    set_resizable(true); // Allow resizing for full width
     
-    // Center the window
-    set_halign(Gtk::Align::CENTER);
-    set_valign(Gtk::Align::CENTER);
+    // Align to fill the available space
+    set_halign(Gtk::Align::FILL);
+    set_valign(Gtk::Align::FILL);
     
     // Title
     title_label.set_markup("<big><b>ログイン</b></big>");
@@ -58,6 +57,12 @@ LoginWindow::LoginWindow()
     guest_button.set_margin_start(20);
     guest_button.set_margin_end(20);
     guest_button.set_margin_bottom(10);
+
+    // Remember me checkbox
+    remember_me_checkbutton.set_label("IDとパスワードを記憶する");
+    remember_me_checkbutton.set_margin_start(20);
+    remember_me_checkbutton.set_margin_end(20);
+    remember_me_checkbutton.set_margin_bottom(10);
     
     // Status label
     status_label.set_text("");
@@ -68,16 +73,21 @@ LoginWindow::LoginWindow()
     // Layout
     form_box.set_margin(20);
     form_box.set_spacing(5);
+    form_box.set_halign(Gtk::Align::CENTER); // Center the form within the window
+    form_box.set_valign(Gtk::Align::CENTER);
     form_box.append(title_label);
     form_box.append(username_label);
     form_box.append(username_entry);
     form_box.append(password_label);
     form_box.append(password_entry);
+    form_box.append(remember_me_checkbutton); // Add remember me checkbox
     form_box.append(login_button);
     form_box.append(register_button);
     form_box.append(guest_button);
     form_box.append(status_label);
     
+    main_box.set_halign(Gtk::Align::FILL); // Make main_box fill horizontally
+    main_box.set_valign(Gtk::Align::FILL); // Make main_box fill vertically
     main_box.append(form_box);
     set_child(main_box);
     
@@ -89,6 +99,24 @@ LoginWindow::LoginWindow()
     // Allow Enter key to trigger login
     username_entry.signal_activate().connect(sigc::mem_fun(*this, &LoginWindow::on_login_clicked));
     password_entry.signal_activate().connect(sigc::mem_fun(*this, &LoginWindow::on_login_clicked));
+
+    // Load saved credentials
+    Glib::RefPtr<Glib::KeyFile> key_file = Glib::KeyFile::create();
+    try {
+        key_file->load_from_data(Glib::file_get_contents("login_credentials.conf"));
+        Glib::ustring saved_username = key_file->get_string("Login", "username");
+        Glib::ustring saved_password = key_file->get_string("Login", "password");
+        bool remember_me = key_file->get_boolean("Login", "remember_me");
+
+        if (remember_me) {
+            username_entry.set_text(saved_username);
+            password_entry.set_text(saved_password);
+            remember_me_checkbutton.set_active(true);
+        }
+    } catch (const Glib::FileError& ex) {
+        // File not found or other error, ignore and proceed
+        std::cerr << "Error loading login credentials: " << ex.what() << std::endl;
+    }
     
     set_visible(true);
 }
@@ -107,6 +135,18 @@ void LoginWindow::on_login_clicked() {
     if (AuthManager::getInstance().authenticateUser(username, password)) {
         status_label.set_text("ログイン成功！");
         status_label.set_markup("<span foreground='green'>ログイン成功！</span>");
+        
+        // Save credentials if "remember me" is checked
+        if (remember_me_checkbutton.get_active()) {
+            Glib::RefPtr<Glib::KeyFile> key_file = Glib::KeyFile::create();
+            key_file->set_string("Login", "username", username);
+            key_file->set_string("Login", "password", password);
+            key_file->set_boolean("Login", "remember_me", true);
+            Glib::file_set_contents("login_credentials.conf", key_file->to_data());
+        } else {
+            // Clear saved credentials if "remember me" is unchecked
+            Glib::file_set_contents("login_credentials.conf", "");
+        }
         
         // Emit success signal
         signal_login_success.emit();
@@ -128,4 +168,4 @@ void LoginWindow::on_guest_clicked() {
     // For guest mode, we'll just emit login success without authentication
     signal_login_success.emit();
     hide();
-} 
+}

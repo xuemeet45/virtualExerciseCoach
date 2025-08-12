@@ -201,4 +201,5 @@ void VirtualFitnessCoachWindow::on_my_page_clicked() {
 void VirtualFitnessCoachWindow::on_logout_clicked() {
     AuthManager::getInstance().logout();
     hide();
+    signal_logout_request.emit(); // Emit the logout signal
 }
