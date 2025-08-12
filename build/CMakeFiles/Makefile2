@@ -63,11 +63,11 @@ CMAKE_BINARY_DIR = /Users/monsoon/Documents/gtkmm-sample/build
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
-all: CMakeFiles/fcapp.dir/all
+all: CMakeFiles/VirtualExerciseCoach.dir/all
 .PHONY : all
 
 # The main recursive "codegen" target.
-codegen: CMakeFiles/fcapp.dir/codegen
+codegen: CMakeFiles/VirtualExerciseCoach.dir/codegen
 .PHONY : codegen
 
 # The main recursive "preinstall" target.
@@ -75,40 +75,40 @@ preinstall:
 .PHONY : preinstall
 
 # The main recursive "clean" target.
-clean: CMakeFiles/fcapp.dir/clean
+clean: CMakeFiles/VirtualExerciseCoach.dir/clean
 .PHONY : clean
 
 #=============================================================================
-# Target rules for target CMakeFiles/fcapp.dir
+# Target rules for target CMakeFiles/VirtualExerciseCoach.dir
 
 # All Build rule for target.
-CMakeFiles/fcapp.dir/all:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/fcapp.dir/build.make CMakeFiles/fcapp.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/fcapp.dir/build.make CMakeFiles/fcapp.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/monsoon/Documents/gtkmm-sample/build/CMakeFiles --progress-num=1,2,3,4,5,6 "Built target fcapp"
-.PHONY : CMakeFiles/fcapp.dir/all
+CMakeFiles/VirtualExerciseCoach.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/monsoon/Documents/gtkmm-sample/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10,11 "Built target VirtualExerciseCoach"
+.PHONY : CMakeFiles/VirtualExerciseCoach.dir/all
 
 # Build rule for subdir invocation for target.
-CMakeFiles/fcapp.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/monsoon/Documents/gtkmm-sample/build/CMakeFiles 6
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/fcapp.dir/all
+CMakeFiles/VirtualExerciseCoach.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/monsoon/Documents/gtkmm-sample/build/CMakeFiles 11
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/VirtualExerciseCoach.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /Users/monsoon/Documents/gtkmm-sample/build/CMakeFiles 0
-.PHONY : CMakeFiles/fcapp.dir/rule
+.PHONY : CMakeFiles/VirtualExerciseCoach.dir/rule
 
 # Convenience name for target.
-fcapp: CMakeFiles/fcapp.dir/rule
-.PHONY : fcapp
+VirtualExerciseCoach: CMakeFiles/VirtualExerciseCoach.dir/rule
+.PHONY : VirtualExerciseCoach
 
 # codegen rule for target.
-CMakeFiles/fcapp.dir/codegen:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/fcapp.dir/build.make CMakeFiles/fcapp.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/monsoon/Documents/gtkmm-sample/build/CMakeFiles --progress-num=1,2,3,4,5,6 "Finished codegen for target fcapp"
-.PHONY : CMakeFiles/fcapp.dir/codegen
+CMakeFiles/VirtualExerciseCoach.dir/codegen:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/codegen
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/monsoon/Documents/gtkmm-sample/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10,11 "Finished codegen for target VirtualExerciseCoach"
+.PHONY : CMakeFiles/VirtualExerciseCoach.dir/codegen
 
 # clean rule for target.
-CMakeFiles/fcapp.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/fcapp.dir/build.make CMakeFiles/fcapp.dir/clean
-.PHONY : CMakeFiles/fcapp.dir/clean
+CMakeFiles/VirtualExerciseCoach.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/clean
+.PHONY : CMakeFiles/VirtualExerciseCoach.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

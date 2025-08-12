@@ -9,6 +9,7 @@
 #include <tensorflow/lite/optional_debug_tools.h>
 #include "DatabaseManager.h" // Add this include
 #include <algorithm>
+#include <sstream> // Added for std::ostringstream
 
 const char* joint_names[17] = {
     "Nose", "Left Eye", "Right Eye", "Left Ear", "Right Ear",
@@ -68,7 +69,11 @@ PoseDetectionWindow::PoseDetectionWindow(const Exercise& exercise)
     : Gtk::Window(),
       main_box(Gtk::Orientation::VERTICAL),
       exercise(exercise),
-      is_running(false) {
+      is_running(false),
+      countdown_value(0),
+      recording_duration(0),
+      is_counting_down(false),
+      is_recording(false) {
     
     set_title("バーチャルエクササイズコーチ - ポーズ検出");
     set_default_size(800, 600);
@@ -109,6 +114,13 @@ PoseDetectionWindow::PoseDetectionWindow(const Exercise& exercise)
 
     // Connect signals
     close_button.signal_clicked().connect([this]() {
+        // Disconnect any active timers
+        if (countdown_connection.connected()) {
+            countdown_connection.disconnect();
+        }
+        if (recording_connection.connected()) {
+            recording_connection.disconnect();
+        }
         stop_camera();
         hide();
     });
@@ -174,6 +186,13 @@ PoseDetectionWindow::PoseDetectionWindow(const Exercise& exercise)
 }
 
 PoseDetectionWindow::~PoseDetectionWindow() {
+    // Disconnect any active timers
+    if (countdown_connection.connected()) {
+        countdown_connection.disconnect();
+    }
+    if (recording_connection.connected()) {
+        recording_connection.disconnect();
+    }
     stop_camera();
 }
 
@@ -459,7 +478,7 @@ bool PoseDetectionWindow::update_frame() {
                                 float confidence = output_data[i * keypoint_size + 2];
                                 global_db_manager->insert_exercise_pose(exercise.get_id(), i, x, y, confidence, frame_number);
                             }
-
+                            
                             // --- Pose comparison and feedback ---
                             // This section is now handled by the advanced feedback logic above
                             // auto ref_keypoints = global_db_manager->fetch_reference_pose(exercise.get_id());
@@ -553,6 +572,33 @@ bool PoseDetectionWindow::update_frame() {
                    cv::Scalar(255, 255, 255), 2);
     }
 
+    // Add countdown and recording overlay
+    if (is_counting_down) {
+        // Draw countdown overlay
+        cv::putText(frame, "Get Ready!", 
+                   cv::Point(frame.cols/2 - 100, frame.rows/2 - 50), 
+                   cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255, 255, 0), 3);
+        cv::putText(frame, std::to_string(countdown_value), 
+                   cv::Point(frame.cols/2 - 30, frame.rows/2 + 20), 
+                   cv::FONT_HERSHEY_SIMPLEX, 3.0, cv::Scalar(255, 0, 0), 4);
+    } else if (is_recording) {
+        // Draw recording overlay
+        cv::putText(frame, "RECORDING", 
+                   cv::Point(frame.cols/2 - 80, frame.rows/2 - 50), 
+                   cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0, 0, 255), 3);
+        
+        // Draw recording progress
+        int seconds = recording_duration / 1000;
+        int tenths = (recording_duration % 1000) / 100;
+        std::string time_text = std::to_string(seconds) + "." + std::to_string(tenths) + "s";
+        cv::putText(frame, time_text, 
+                   cv::Point(frame.cols/2 - 40, frame.rows/2 + 20), 
+                   cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(255, 255, 255), 2);
+        
+        // Draw recording indicator (red circle)
+        cv::circle(frame, cv::Point(frame.cols - 50, 50), 15, cv::Scalar(0, 0, 255), -1);
+    }
+
     int width = frame.cols;
     int height = frame.rows;
     int stride = width * 3;
@@ -597,23 +643,139 @@ void PoseDetectionWindow::on_draw(const Cairo::RefPtr<Cairo::Context>& cr, int w
 } 
 
 void PoseDetectionWindow::record_reference_pose() {
-    if (last_detected_keypoints.size() != 17 * 3) {
-        status_label.set_text("No valid pose detected to record.");
+    // Check if a reference pose already exists for this exercise
+    std::ostringstream oss;
+    oss << "SELECT COUNT(*) FROM reference_poses WHERE exercise_id = " << exercise.get_id();
+    auto stats = global_db_manager->fetch_statistics(oss.str());
+    bool already_exists = false;
+    if (!stats.empty() && stats[0].count("count") > 0) {
+        already_exists = (std::stoi(stats[0].at("count")) > 0);
+    }
+
+    if (already_exists) {
+        auto dialog = new Gtk::MessageDialog(
+            *this,
+            "参照ポーズがすでに存在します。再登録しますか？",
+            false, // use_markup
+            Gtk::MessageType::QUESTION // Set dialog type (INFO, WARNING, QUESTION, etc.)
+        );
+        dialog->set_secondary_text("以前の参照ポーズが削除します。よろしいでしょうか？");
+        dialog->set_modal(true);
+        dialog->set_default_response(Gtk::ResponseType::NO);
+
+        // Remove all default buttons by only adding your own
+        dialog->add_button("戻る", Gtk::ResponseType::NO);
+        dialog->add_button("はい", Gtk::ResponseType::YES);
+
+        dialog->signal_response().connect(
+            [this, dialog](int response_id) {
+                if (response_id == Gtk::ResponseType::YES) {
+                    // Proceed with recording
+                    record_button.set_sensitive(false);
+                    countdown_value = 5;
+                    is_counting_down = true;
+                    is_recording = false;
+                    recorded_poses.clear();
+                    countdown_connection = Glib::signal_timeout().connect(
+                        sigc::mem_fun(*this, &PoseDetectionWindow::on_countdown_timer), 1000);
+                    status_label.set_text("Get ready! Recording in " + std::to_string(countdown_value) + "...");
+                }
+                dialog->hide();
+            }
+        );
+        dialog->show();
         return;
     }
-    bool all_success = true;
-    for (int i = 0; i < 17; ++i) {
-        float y = last_detected_keypoints[i * 3];
-        float x = last_detected_keypoints[i * 3 + 1];
-        float confidence = last_detected_keypoints[i * 3 + 2];
-        // frame_number = 0 for static reference pose
-        if (!global_db_manager->insert_reference_pose(exercise.get_id(), i, x, y, confidence, 0)) {
-            all_success = false;
-        }
-    }
-    if (all_success) {
-        status_label.set_text("Reference pose recorded!");
+
+    // No reference pose exists, proceed directly
+    record_button.set_sensitive(false);
+    countdown_value = 5;
+    is_counting_down = true;
+    is_recording = false;
+    recorded_poses.clear();
+    countdown_connection = Glib::signal_timeout().connect(
+        sigc::mem_fun(*this, &PoseDetectionWindow::on_countdown_timer), 1000);
+    status_label.set_text("Get ready! Recording in " + std::to_string(countdown_value) + "...");
+}
+
+bool PoseDetectionWindow::on_countdown_timer() {
+    countdown_value--;
+    
+    if (countdown_value > 0) {
+        status_label.set_text("Get ready! Recording in " + std::to_string(countdown_value) + "...");
+        return true; // Continue countdown
     } else {
-        status_label.set_text("Failed to record reference pose.");
+        // Countdown finished, start recording
+        is_counting_down = false;
+        is_recording = true;
+        recording_duration = 0;
+        recorded_poses.clear();
+        
+        status_label.set_text("Recording... (0/5 seconds)");
+        
+        // Start recording timer (update every 100ms for smoother progress)
+        recording_connection = Glib::signal_timeout().connect(
+            sigc::mem_fun(*this, &PoseDetectionWindow::on_recording_timer), 100);
+        
+        return false; // Stop countdown timer
     }
-} 
+}
+
+bool PoseDetectionWindow::on_recording_timer() {
+    recording_duration += 100; // Increment by 100ms
+    
+    if (recording_duration < 5000) { // Less than 5 seconds
+        // Record current pose if available
+        if (last_detected_keypoints.size() == 17 * 3) {
+            recorded_poses.push_back(last_detected_keypoints);
+        }
+        
+        int seconds = recording_duration / 1000;
+        int tenths = (recording_duration % 1000) / 100;
+        status_label.set_text("Recording... (" + std::to_string(seconds) + "." + std::to_string(tenths) + "/5.0 seconds)");
+        
+        return true; // Continue recording
+    } else {
+        // Recording finished
+        is_recording = false;
+        
+        // Process recorded poses
+        if (recorded_poses.empty()) {
+            status_label.set_text("No poses recorded. Please try again.");
+            record_button.set_sensitive(true);
+            return false;
+        }
+        
+        // Use the middle pose as reference (most stable)
+        int middle_index = recorded_poses.size() / 2;
+        const std::vector<float>& reference_pose = recorded_poses[middle_index];
+
+        // Always delete old reference poses for this exercise before inserting new ones
+        {
+            std::ostringstream oss;
+            oss << "DELETE FROM reference_poses WHERE exercise_id = " << exercise.get_id();
+            global_db_manager->execute_query(oss.str());
+        }
+
+        // Save the reference pose
+        bool all_success = true;
+        for (int i = 0; i < 17; ++i) {
+            float y = reference_pose[i * 3];
+            float x = reference_pose[i * 3 + 1];
+            float confidence = reference_pose[i * 3 + 2];
+            // frame_number = 0 for static reference pose
+            if (!global_db_manager->insert_reference_pose(exercise.get_id(), i, x, y, confidence, 0)) {
+                all_success = false;
+            }
+        }
+        
+        if (all_success) {
+            status_label.set_text("Reference pose recorded successfully! (" + std::to_string(recorded_poses.size()) + " poses captured)");
+        } else {
+            status_label.set_text("Failed to record reference pose.");
+        }
+        
+        record_button.set_sensitive(true);
+        return false; // Stop recording timer
+    }
+}

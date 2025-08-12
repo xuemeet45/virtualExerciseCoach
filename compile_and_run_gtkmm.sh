@@ -21,14 +21,21 @@ clang++ -std=c++17 \
     $TFLITE_INCLUDE \
     $(pkg-config gtkmm-4.0 --cflags) \
     $(pkg-config opencv4 --cflags) \
+    -I/opt/homebrew/opt/openssl@3/include \
     src/main.cc \
     src/VirtualFitnessCoachWindow.cc \
     src/DatabaseManager.cc \
     src/ExerciseDetailWindow.cc \
     src/PoseDetectionWindow.cc \
+    src/AuthManager.cc \
+    src/LoginWindow.cc \
+    src/RegisterWindow.cc \
+    src/MyPageWindow.cc \
+    src/User.cc \
     -o VirtualExerciseCoach \
     $(pkg-config gtkmm-4.0 --libs) \
     $(pkg-config opencv4 --libs) \
+    -L/opt/homebrew/opt/openssl@3/lib -lssl -lcrypto \
     -L$POSTGRES_LIB -lpq \
     -L$TFLITE_BUILD_DIR/pthreadpool -lpthreadpool \
     -L$TFLITE_DEPS_DIR/abseil-cpp-build/absl/base -labsl_base -labsl_log_severity -labsl_raw_logging_internal -labsl_throw_delegate -labsl_malloc_internal -labsl_scoped_set_env -labsl_strerror -labsl_spinlock_wait \

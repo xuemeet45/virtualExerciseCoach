@@ -26,11 +26,16 @@ private:
     void stop_camera();
     void on_draw(const Cairo::RefPtr<Cairo::Context>& cr, int width, int height);
 
+    void record_reference_pose(); // Add this method
+    bool on_countdown_timer(); // Countdown timer callback
+    bool on_recording_timer(); // Recording timer callback
+
     const Exercise& exercise;
     Gtk::Box main_box;
     Gtk::Label title_label;
     Gtk::Label status_label;
     Gtk::Button close_button;
+    Gtk::Button record_button; // Add this button
     Gtk::ScrolledWindow scrolled_window;
     Gtk::DrawingArea drawing_area;
     
@@ -42,6 +47,17 @@ private:
     std::vector<guchar> image_buffer;
     std::unique_ptr<tflite::FlatBufferModel> tflite_model;
     std::unique_ptr<tflite::Interpreter> tflite_interpreter;
+
+    std::vector<float> last_detected_keypoints; // Store last detected keypoints
+    
+    // Timer and recording state variables
+    sigc::connection countdown_connection;
+    sigc::connection recording_connection;
+    int countdown_value;
+    int recording_duration;
+    bool is_counting_down;
+    bool is_recording;
+    std::vector<std::vector<float>> recorded_poses; // Store recorded poses during recording period
 };
 
 #endif // POSE_DETECTION_WINDOW_H 

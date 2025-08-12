@@ -117,137 +117,257 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named fcapp
+# Target rules for targets named VirtualExerciseCoach
 
 # Build rule for target.
-fcapp: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 fcapp
-.PHONY : fcapp
+VirtualExerciseCoach: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 VirtualExerciseCoach
+.PHONY : VirtualExerciseCoach
 
 # fast build rule for target.
-fcapp/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/fcapp.dir/build.make CMakeFiles/fcapp.dir/build
-.PHONY : fcapp/fast
+VirtualExerciseCoach/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/build
+.PHONY : VirtualExerciseCoach/fast
 
-DatabaseManager.o: DatabaseManager.cc.o
-.PHONY : DatabaseManager.o
-
-# target to build an object file
-DatabaseManager.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/fcapp.dir/build.make CMakeFiles/fcapp.dir/DatabaseManager.cc.o
-.PHONY : DatabaseManager.cc.o
-
-DatabaseManager.i: DatabaseManager.cc.i
-.PHONY : DatabaseManager.i
-
-# target to preprocess a source file
-DatabaseManager.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/fcapp.dir/build.make CMakeFiles/fcapp.dir/DatabaseManager.cc.i
-.PHONY : DatabaseManager.cc.i
-
-DatabaseManager.s: DatabaseManager.cc.s
-.PHONY : DatabaseManager.s
-
-# target to generate assembly for a file
-DatabaseManager.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/fcapp.dir/build.make CMakeFiles/fcapp.dir/DatabaseManager.cc.s
-.PHONY : DatabaseManager.cc.s
-
-ExerciseDetailWindow.o: ExerciseDetailWindow.cc.o
-.PHONY : ExerciseDetailWindow.o
+src/AuthManager.o: src/AuthManager.cc.o
+.PHONY : src/AuthManager.o
 
 # target to build an object file
-ExerciseDetailWindow.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/fcapp.dir/build.make CMakeFiles/fcapp.dir/ExerciseDetailWindow.cc.o
-.PHONY : ExerciseDetailWindow.cc.o
+src/AuthManager.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/AuthManager.cc.o
+.PHONY : src/AuthManager.cc.o
 
-ExerciseDetailWindow.i: ExerciseDetailWindow.cc.i
-.PHONY : ExerciseDetailWindow.i
+src/AuthManager.i: src/AuthManager.cc.i
+.PHONY : src/AuthManager.i
 
 # target to preprocess a source file
-ExerciseDetailWindow.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/fcapp.dir/build.make CMakeFiles/fcapp.dir/ExerciseDetailWindow.cc.i
-.PHONY : ExerciseDetailWindow.cc.i
+src/AuthManager.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/AuthManager.cc.i
+.PHONY : src/AuthManager.cc.i
 
-ExerciseDetailWindow.s: ExerciseDetailWindow.cc.s
-.PHONY : ExerciseDetailWindow.s
+src/AuthManager.s: src/AuthManager.cc.s
+.PHONY : src/AuthManager.s
 
 # target to generate assembly for a file
-ExerciseDetailWindow.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/fcapp.dir/build.make CMakeFiles/fcapp.dir/ExerciseDetailWindow.cc.s
-.PHONY : ExerciseDetailWindow.cc.s
+src/AuthManager.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/AuthManager.cc.s
+.PHONY : src/AuthManager.cc.s
 
-PoseDetectionWindow.o: PoseDetectionWindow.cc.o
-.PHONY : PoseDetectionWindow.o
+src/DatabaseManager.o: src/DatabaseManager.cc.o
+.PHONY : src/DatabaseManager.o
 
 # target to build an object file
-PoseDetectionWindow.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/fcapp.dir/build.make CMakeFiles/fcapp.dir/PoseDetectionWindow.cc.o
-.PHONY : PoseDetectionWindow.cc.o
+src/DatabaseManager.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/DatabaseManager.cc.o
+.PHONY : src/DatabaseManager.cc.o
 
-PoseDetectionWindow.i: PoseDetectionWindow.cc.i
-.PHONY : PoseDetectionWindow.i
+src/DatabaseManager.i: src/DatabaseManager.cc.i
+.PHONY : src/DatabaseManager.i
 
 # target to preprocess a source file
-PoseDetectionWindow.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/fcapp.dir/build.make CMakeFiles/fcapp.dir/PoseDetectionWindow.cc.i
-.PHONY : PoseDetectionWindow.cc.i
+src/DatabaseManager.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/DatabaseManager.cc.i
+.PHONY : src/DatabaseManager.cc.i
 
-PoseDetectionWindow.s: PoseDetectionWindow.cc.s
-.PHONY : PoseDetectionWindow.s
+src/DatabaseManager.s: src/DatabaseManager.cc.s
+.PHONY : src/DatabaseManager.s
 
 # target to generate assembly for a file
-PoseDetectionWindow.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/fcapp.dir/build.make CMakeFiles/fcapp.dir/PoseDetectionWindow.cc.s
-.PHONY : PoseDetectionWindow.cc.s
+src/DatabaseManager.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/DatabaseManager.cc.s
+.PHONY : src/DatabaseManager.cc.s
 
-VirtualFitnessCoachWindow.o: VirtualFitnessCoachWindow.cc.o
-.PHONY : VirtualFitnessCoachWindow.o
+src/ExerciseDetailWindow.o: src/ExerciseDetailWindow.cc.o
+.PHONY : src/ExerciseDetailWindow.o
 
 # target to build an object file
-VirtualFitnessCoachWindow.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/fcapp.dir/build.make CMakeFiles/fcapp.dir/VirtualFitnessCoachWindow.cc.o
-.PHONY : VirtualFitnessCoachWindow.cc.o
+src/ExerciseDetailWindow.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/ExerciseDetailWindow.cc.o
+.PHONY : src/ExerciseDetailWindow.cc.o
 
-VirtualFitnessCoachWindow.i: VirtualFitnessCoachWindow.cc.i
-.PHONY : VirtualFitnessCoachWindow.i
+src/ExerciseDetailWindow.i: src/ExerciseDetailWindow.cc.i
+.PHONY : src/ExerciseDetailWindow.i
 
 # target to preprocess a source file
-VirtualFitnessCoachWindow.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/fcapp.dir/build.make CMakeFiles/fcapp.dir/VirtualFitnessCoachWindow.cc.i
-.PHONY : VirtualFitnessCoachWindow.cc.i
+src/ExerciseDetailWindow.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/ExerciseDetailWindow.cc.i
+.PHONY : src/ExerciseDetailWindow.cc.i
 
-VirtualFitnessCoachWindow.s: VirtualFitnessCoachWindow.cc.s
-.PHONY : VirtualFitnessCoachWindow.s
+src/ExerciseDetailWindow.s: src/ExerciseDetailWindow.cc.s
+.PHONY : src/ExerciseDetailWindow.s
 
 # target to generate assembly for a file
-VirtualFitnessCoachWindow.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/fcapp.dir/build.make CMakeFiles/fcapp.dir/VirtualFitnessCoachWindow.cc.s
-.PHONY : VirtualFitnessCoachWindow.cc.s
+src/ExerciseDetailWindow.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/ExerciseDetailWindow.cc.s
+.PHONY : src/ExerciseDetailWindow.cc.s
 
-main.o: main.cc.o
-.PHONY : main.o
+src/LoginWindow.o: src/LoginWindow.cc.o
+.PHONY : src/LoginWindow.o
 
 # target to build an object file
-main.cc.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/fcapp.dir/build.make CMakeFiles/fcapp.dir/main.cc.o
-.PHONY : main.cc.o
+src/LoginWindow.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/LoginWindow.cc.o
+.PHONY : src/LoginWindow.cc.o
 
-main.i: main.cc.i
-.PHONY : main.i
+src/LoginWindow.i: src/LoginWindow.cc.i
+.PHONY : src/LoginWindow.i
 
 # target to preprocess a source file
-main.cc.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/fcapp.dir/build.make CMakeFiles/fcapp.dir/main.cc.i
-.PHONY : main.cc.i
+src/LoginWindow.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/LoginWindow.cc.i
+.PHONY : src/LoginWindow.cc.i
 
-main.s: main.cc.s
-.PHONY : main.s
+src/LoginWindow.s: src/LoginWindow.cc.s
+.PHONY : src/LoginWindow.s
 
 # target to generate assembly for a file
-main.cc.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/fcapp.dir/build.make CMakeFiles/fcapp.dir/main.cc.s
-.PHONY : main.cc.s
+src/LoginWindow.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/LoginWindow.cc.s
+.PHONY : src/LoginWindow.cc.s
+
+src/MyPageWindow.o: src/MyPageWindow.cc.o
+.PHONY : src/MyPageWindow.o
+
+# target to build an object file
+src/MyPageWindow.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/MyPageWindow.cc.o
+.PHONY : src/MyPageWindow.cc.o
+
+src/MyPageWindow.i: src/MyPageWindow.cc.i
+.PHONY : src/MyPageWindow.i
+
+# target to preprocess a source file
+src/MyPageWindow.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/MyPageWindow.cc.i
+.PHONY : src/MyPageWindow.cc.i
+
+src/MyPageWindow.s: src/MyPageWindow.cc.s
+.PHONY : src/MyPageWindow.s
+
+# target to generate assembly for a file
+src/MyPageWindow.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/MyPageWindow.cc.s
+.PHONY : src/MyPageWindow.cc.s
+
+src/PoseDetectionWindow.o: src/PoseDetectionWindow.cc.o
+.PHONY : src/PoseDetectionWindow.o
+
+# target to build an object file
+src/PoseDetectionWindow.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/PoseDetectionWindow.cc.o
+.PHONY : src/PoseDetectionWindow.cc.o
+
+src/PoseDetectionWindow.i: src/PoseDetectionWindow.cc.i
+.PHONY : src/PoseDetectionWindow.i
+
+# target to preprocess a source file
+src/PoseDetectionWindow.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/PoseDetectionWindow.cc.i
+.PHONY : src/PoseDetectionWindow.cc.i
+
+src/PoseDetectionWindow.s: src/PoseDetectionWindow.cc.s
+.PHONY : src/PoseDetectionWindow.s
+
+# target to generate assembly for a file
+src/PoseDetectionWindow.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/PoseDetectionWindow.cc.s
+.PHONY : src/PoseDetectionWindow.cc.s
+
+src/RegisterWindow.o: src/RegisterWindow.cc.o
+.PHONY : src/RegisterWindow.o
+
+# target to build an object file
+src/RegisterWindow.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/RegisterWindow.cc.o
+.PHONY : src/RegisterWindow.cc.o
+
+src/RegisterWindow.i: src/RegisterWindow.cc.i
+.PHONY : src/RegisterWindow.i
+
+# target to preprocess a source file
+src/RegisterWindow.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/RegisterWindow.cc.i
+.PHONY : src/RegisterWindow.cc.i
+
+src/RegisterWindow.s: src/RegisterWindow.cc.s
+.PHONY : src/RegisterWindow.s
+
+# target to generate assembly for a file
+src/RegisterWindow.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/RegisterWindow.cc.s
+.PHONY : src/RegisterWindow.cc.s
+
+src/User.o: src/User.cc.o
+.PHONY : src/User.o
+
+# target to build an object file
+src/User.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/User.cc.o
+.PHONY : src/User.cc.o
+
+src/User.i: src/User.cc.i
+.PHONY : src/User.i
+
+# target to preprocess a source file
+src/User.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/User.cc.i
+.PHONY : src/User.cc.i
+
+src/User.s: src/User.cc.s
+.PHONY : src/User.s
+
+# target to generate assembly for a file
+src/User.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/User.cc.s
+.PHONY : src/User.cc.s
+
+src/VirtualFitnessCoachWindow.o: src/VirtualFitnessCoachWindow.cc.o
+.PHONY : src/VirtualFitnessCoachWindow.o
+
+# target to build an object file
+src/VirtualFitnessCoachWindow.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/VirtualFitnessCoachWindow.cc.o
+.PHONY : src/VirtualFitnessCoachWindow.cc.o
+
+src/VirtualFitnessCoachWindow.i: src/VirtualFitnessCoachWindow.cc.i
+.PHONY : src/VirtualFitnessCoachWindow.i
+
+# target to preprocess a source file
+src/VirtualFitnessCoachWindow.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/VirtualFitnessCoachWindow.cc.i
+.PHONY : src/VirtualFitnessCoachWindow.cc.i
+
+src/VirtualFitnessCoachWindow.s: src/VirtualFitnessCoachWindow.cc.s
+.PHONY : src/VirtualFitnessCoachWindow.s
+
+# target to generate assembly for a file
+src/VirtualFitnessCoachWindow.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/VirtualFitnessCoachWindow.cc.s
+.PHONY : src/VirtualFitnessCoachWindow.cc.s
+
+src/main.o: src/main.cc.o
+.PHONY : src/main.o
+
+# target to build an object file
+src/main.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/main.cc.o
+.PHONY : src/main.cc.o
+
+src/main.i: src/main.cc.i
+.PHONY : src/main.i
+
+# target to preprocess a source file
+src/main.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/main.cc.i
+.PHONY : src/main.cc.i
+
+src/main.s: src/main.cc.s
+.PHONY : src/main.s
+
+# target to generate assembly for a file
+src/main.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/main.cc.s
+.PHONY : src/main.cc.s
 
 # Help Target
 help:
@@ -257,22 +377,37 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... fcapp"
-	@echo "... DatabaseManager.o"
-	@echo "... DatabaseManager.i"
-	@echo "... DatabaseManager.s"
-	@echo "... ExerciseDetailWindow.o"
-	@echo "... ExerciseDetailWindow.i"
-	@echo "... ExerciseDetailWindow.s"
-	@echo "... PoseDetectionWindow.o"
-	@echo "... PoseDetectionWindow.i"
-	@echo "... PoseDetectionWindow.s"
-	@echo "... VirtualFitnessCoachWindow.o"
-	@echo "... VirtualFitnessCoachWindow.i"
-	@echo "... VirtualFitnessCoachWindow.s"
-	@echo "... main.o"
-	@echo "... main.i"
-	@echo "... main.s"
+	@echo "... VirtualExerciseCoach"
+	@echo "... src/AuthManager.o"
+	@echo "... src/AuthManager.i"
+	@echo "... src/AuthManager.s"
+	@echo "... src/DatabaseManager.o"
+	@echo "... src/DatabaseManager.i"
+	@echo "... src/DatabaseManager.s"
+	@echo "... src/ExerciseDetailWindow.o"
+	@echo "... src/ExerciseDetailWindow.i"
+	@echo "... src/ExerciseDetailWindow.s"
+	@echo "... src/LoginWindow.o"
+	@echo "... src/LoginWindow.i"
+	@echo "... src/LoginWindow.s"
+	@echo "... src/MyPageWindow.o"
+	@echo "... src/MyPageWindow.i"
+	@echo "... src/MyPageWindow.s"
+	@echo "... src/PoseDetectionWindow.o"
+	@echo "... src/PoseDetectionWindow.i"
+	@echo "... src/PoseDetectionWindow.s"
+	@echo "... src/RegisterWindow.o"
+	@echo "... src/RegisterWindow.i"
+	@echo "... src/RegisterWindow.s"
+	@echo "... src/User.o"
+	@echo "... src/User.i"
+	@echo "... src/User.s"
+	@echo "... src/VirtualFitnessCoachWindow.o"
+	@echo "... src/VirtualFitnessCoachWindow.i"
+	@echo "... src/VirtualFitnessCoachWindow.s"
+	@echo "... src/main.o"
+	@echo "... src/main.i"
+	@echo "... src/main.s"
 .PHONY : help
 
 

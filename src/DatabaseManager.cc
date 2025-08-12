@@ -114,3 +114,111 @@ std::vector<std::array<float, 3>> DatabaseManager::fetch_reference_pose(int exer
     PQclear(res);
     return keypoints;
 }
+
+std::vector<User> DatabaseManager::fetch_users(const std::string& query) {
+    if (!conn) {
+        return {};
+    }
+
+    PGresult *res = PQexec(conn, query.c_str());
+
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        std::cerr << "Query failed: " << PQerrorMessage(conn) << std::endl;
+        PQclear(res);
+        return {};
+    }
+
+    std::vector<User> users;
+    int nRows = PQntuples(res);
+
+    for (int i = 0; i < nRows; i++) {
+        int id = std::stoi(PQgetvalue(res, i, 0));
+        Glib::ustring username = PQgetvalue(res, i, 1);
+        Glib::ustring email = PQgetvalue(res, i, 2);
+        Glib::ustring password_hash = PQgetvalue(res, i, 3);
+        Glib::ustring first_name = PQgetvalue(res, i, 4);
+        Glib::ustring last_name = PQgetvalue(res, i, 5);
+        Glib::ustring created_at = PQgetvalue(res, i, 6);
+        Glib::ustring last_login = PQgetvalue(res, i, 7);
+        bool is_active = (PQgetvalue(res, i, 8)[0] == 't');
+
+        users.emplace_back(id, username, email, password_hash, first_name, last_name, created_at, last_login, is_active);
+    }
+
+    PQclear(res);
+    return users;
+}
+
+bool DatabaseManager::execute_query(const std::string& query) {
+    if (!conn) return false;
+    
+    PGresult* res = PQexec(conn, query.c_str());
+    bool success = PQresultStatus(res) == PGRES_COMMAND_OK;
+    if (!success) {
+        std::cerr << "Query failed: " << PQerrorMessage(conn) << std::endl;
+    }
+    PQclear(res);
+    return success;
+}
+
+std::vector<std::map<std::string, std::string>> DatabaseManager::fetch_sessions(const std::string& query) {
+    if (!conn) {
+        return {};
+    }
+
+    PGresult *res = PQexec(conn, query.c_str());
+
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        std::cerr << "Query failed: " << PQerrorMessage(conn) << std::endl;
+        PQclear(res);
+        return {};
+    }
+
+    std::vector<std::map<std::string, std::string>> sessions;
+    int nRows = PQntuples(res);
+    int nCols = PQnfields(res);
+
+    for (int i = 0; i < nRows; i++) {
+        std::map<std::string, std::string> session;
+        for (int j = 0; j < nCols; j++) {
+            std::string field_name = PQfname(res, j);
+            std::string field_value = PQgetvalue(res, i, j);
+            session[field_name] = field_value;
+        }
+        sessions.push_back(session);
+    }
+
+    PQclear(res);
+    return sessions;
+}
+
+std::vector<std::map<std::string, std::string>> DatabaseManager::fetch_statistics(const std::string& query) {
+    if (!conn) {
+        return {};
+    }
+
+    PGresult *res = PQexec(conn, query.c_str());
+
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        std::cerr << "Query failed: " << PQerrorMessage(conn) << std::endl;
+        PQclear(res);
+        return {};
+    }
+
+    std::vector<std::map<std::string, std::string>> statistics;
+    int nRows = PQntuples(res);
+    int nCols = PQnfields(res);
+
+    for (int i = 0; i < nRows; i++) {
+        std::map<std::string, std::string> stat;
+        for (int j = 0; j < nCols; j++) {
+            std::string field_name = PQfname(res, j);
+            std::string field_value = PQgetvalue(res, i, j);
+            stat[field_name] = field_value;
+        }
+        statistics.push_back(stat);
+    }
+
+    PQclear(res);
+    return statistics;
+}

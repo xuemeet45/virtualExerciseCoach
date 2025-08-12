@@ -8,6 +8,9 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTKMM REQUIRED IMPORTED_TARGET gtkmm-4.0)
 pkg_check_modules(OpenCV REQUIRED IMPORTED_TARGET opencv4)
 
+# Find OpenSSL for JWT functionality
+find_package(OpenSSL REQUIRED)
+
 include_directories(
     ${GTKMM_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
@@ -57,6 +60,7 @@ add_custom_command(TARGET VirtualExerciseCoach POST_BUILD
 target_link_libraries(VirtualExerciseCoach
     PkgConfig::GTKMM
     PkgConfig::OpenCV
+    OpenSSL::SSL OpenSSL::Crypto
     pq
     tensorflow-lite
     pthreadpool

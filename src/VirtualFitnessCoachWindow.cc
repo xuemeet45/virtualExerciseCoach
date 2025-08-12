@@ -56,10 +56,12 @@ VirtualFitnessCoachWindow::VirtualFitnessCoachWindow()
     main_box.append(content_stack);
     set_child(main_box);
 
-    // Connect signals for sidebar buttons (you'll need to implement these)
+    // Connect signals for sidebar buttons
+    profile_button->signal_clicked().connect(sigc::mem_fun(*this, &VirtualFitnessCoachWindow::on_my_page_clicked));
     exercise_button->signal_clicked().connect([this]() {
         content_stack.set_visible_child("exercise_list");
     });
+    logout_button->signal_clicked().connect(sigc::mem_fun(*this, &VirtualFitnessCoachWindow::on_logout_clicked));
 }
 
 void VirtualFitnessCoachWindow::add_exercise_cards(const std::vector<Exercise>& exercises) {
@@ -182,4 +184,21 @@ void VirtualFitnessCoachWindow::show_exercise_detail(const Exercise& exercise) {
     // Add the detail view to the stack
     content_stack.add(*detail_box, "exercise_detail_" + std::to_string(exercise.get_id()));
     content_stack.set_visible_child("exercise_detail_" + std::to_string(exercise.get_id()));
+}
+
+void VirtualFitnessCoachWindow::on_my_page_clicked() {
+    if (!my_page_window) {
+        my_page_window = std::make_unique<MyPageWindow>();
+    }
+    
+    if (AuthManager::getInstance().isLoggedIn()) {
+        my_page_window->updateUserInfo(AuthManager::getInstance().getCurrentUser());
+    }
+    
+    my_page_window->present();
+}
+
+void VirtualFitnessCoachWindow::on_logout_clicked() {
+    AuthManager::getInstance().logout();
+    hide();
 }
