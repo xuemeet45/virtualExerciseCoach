@@ -9,6 +9,7 @@
 #include "MyPageWindow.h"
 #include "AuthManager.h"
 #include "PasswordChangeWindow.h" // Include the new password change window header
+#include "ProfileEditWindow.h"    // Include the new profile edit window header
 
 class VirtualFitnessCoachWindow : public Gtk::ApplicationWindow {
 public:
@@ -23,6 +24,8 @@ private:
     void on_my_page_clicked();
     void on_logout_clicked();
     void show_password_change_window(); // New method to show password change window
+    void show_profile_edit_window(const User& user); // New method to show profile edit window
+    void on_profile_update_success(const User& updated_user); // New method to handle profile update success
 
     Gtk::Box main_box, sidebar, content_area;
     Gtk::Stack content_stack; 
@@ -34,6 +37,7 @@ private:
     std::vector<std::unique_ptr<PoseDetectionWindow>> pose_windows;
     std::unique_ptr<MyPageWindow> my_page_window;
     std::unique_ptr<PasswordChangeWindow> password_change_window; // New unique pointer for password change window
+    std::unique_ptr<ProfileEditWindow> profile_edit_window; // New unique pointer for profile edit window
 };
 
 #endif // VIRTUALFITNESSCOACHWINDOW_H

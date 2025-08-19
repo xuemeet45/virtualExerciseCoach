@@ -192,6 +192,9 @@ void VirtualFitnessCoachWindow::on_my_page_clicked() {
         // Connect the signal from MyPageWindow to show the password change window
         my_page_window->signal_change_password_request().connect(
             sigc::mem_fun(*this, &VirtualFitnessCoachWindow::show_password_change_window));
+        // Connect the signal from MyPageWindow to show the profile edit window
+        my_page_window->signal_edit_profile_request().connect(
+            sigc::mem_fun(*this, &VirtualFitnessCoachWindow::show_profile_edit_window));
     }
     
     if (AuthManager::getInstance().isLoggedIn()) {
@@ -199,6 +202,48 @@ void VirtualFitnessCoachWindow::on_my_page_clicked() {
     }
     
     my_page_window->present();
+}
+
+void VirtualFitnessCoachWindow::show_profile_edit_window(const User& user) {
+    if (!profile_edit_window) {
+        profile_edit_window = std::make_unique<ProfileEditWindow>(*this, user); // Pass *this as parent and current user
+        profile_edit_window->set_modal(true);
+
+        // Connect signals from ProfileEditWindow
+        profile_edit_window->signal_profile_update_success().connect(
+            sigc::mem_fun(*this, &VirtualFitnessCoachWindow::on_profile_update_success));
+
+        profile_edit_window->signal_back_to_mypage().connect([this]() {
+            // User cancelled, hide profile edit window and show MyPage
+            profile_edit_window->hide();
+            if (my_page_window) {
+                my_page_window->present(); // Show MyPage again
+            }
+        });
+    } else {
+        // If window already exists, update its user info and show
+        profile_edit_window = std::make_unique<ProfileEditWindow>(*this, user); // Recreate with updated user
+        profile_edit_window->signal_profile_update_success().connect(
+            sigc::mem_fun(*this, &VirtualFitnessCoachWindow::on_profile_update_success));
+        profile_edit_window->signal_back_to_mypage().connect([this]() {
+            profile_edit_window->hide();
+            if (my_page_window) {
+                my_page_window->present();
+            }
+        });
+    }
+    profile_edit_window->present();
+}
+
+void VirtualFitnessCoachWindow::on_profile_update_success(const User& updated_user) {
+    // Profile updated, hide profile edit window and refresh MyPage
+    if (profile_edit_window) {
+        profile_edit_window->hide();
+    }
+    if (my_page_window) {
+        my_page_window->updateUserInfo(updated_user);
+        my_page_window->present(); // Show MyPage again
+    }
 }
 
 void VirtualFitnessCoachWindow::show_password_change_window() {

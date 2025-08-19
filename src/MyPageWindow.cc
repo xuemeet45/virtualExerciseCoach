@@ -74,7 +74,7 @@ MyPageWindow::MyPageWindow(Gtk::Window& parent) // Accept parent parameter
     favorite_exercise_label.set_margin_bottom(20);
     
     // Action buttons
-    edit_profile_button.set_label("プロフィール編集");
+    edit_profile_button.set_label("ユーザー情報編集");
     edit_profile_button.set_margin_start(20);
     edit_profile_button.set_margin_end(20);
     edit_profile_button.set_margin_bottom(5);
@@ -194,8 +194,7 @@ void MyPageWindow::refreshStatistics() {
 }
 
 void MyPageWindow::on_edit_profile_clicked() {
-    // TODO: Implement profile editing
-    std::cout << "Edit profile clicked" << std::endl;
+    m_signal_edit_profile_request.emit(current_user);
 }
 
 void MyPageWindow::on_change_password_clicked() {
@@ -218,4 +217,8 @@ void MyPageWindow::on_logout_clicked() {
 
 sigc::signal<void()>& MyPageWindow::signal_change_password_request() {
     return m_signal_change_password_request;
+}
+
+sigc::signal<void(const User&)>& MyPageWindow::signal_edit_profile_request() {
+    return m_signal_edit_profile_request;
 }

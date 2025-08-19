@@ -24,6 +24,7 @@ public:
     bool execute_query(const std::string& query);
     std::vector<std::map<std::string, std::string>> fetch_sessions(const std::string& query);
     std::vector<std::map<std::string, std::string>> fetch_statistics(const std::string& query);
+    bool update_user_profile(const User& user); // New method for updating user profile
 
 private:
     PGconn *conn;

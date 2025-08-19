@@ -4,6 +4,7 @@
 #include <gtkmm.h>
 #include "User.h"
 #include "PasswordChangeWindow.h" // Include the new password change window header
+#include "ProfileEditWindow.h"    // Include the new profile edit window header
 
 class MyPageWindow : public Gtk::Window {
 public:
@@ -11,6 +12,9 @@ public:
     
     void updateUserInfo(const User& user);
     void refreshStatistics();
+
+    // Signal to emit when profile edit is requested
+    sigc::signal<void(const User&)>& signal_edit_profile_request();
 
     // Signal to emit when password change is requested
     sigc::signal<void()>& signal_change_password_request();
@@ -24,6 +28,7 @@ private:
 
     // Signal
     sigc::signal<void()> m_signal_change_password_request;
+    sigc::signal<void(const User&)> m_signal_edit_profile_request; // New signal for profile edit
     
     // UI elements
     Gtk::Box main_box;

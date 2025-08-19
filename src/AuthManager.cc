@@ -4,7 +4,8 @@
 #include <sstream>
 #include <iomanip>
 #include <openssl/hmac.h>
-#include <openssl/sha.h>
+#include <openssl/sha.h> // Keep for SHA256_DIGEST_LENGTH if needed, but prefer EVP_MAX_MD_SIZE
+#include <openssl/evp.h> // For EVP_MD_CTX
 #include <openssl/rand.h>
 #include <ctime>
 #include <cstring>
@@ -232,15 +233,38 @@ bool AuthManager::isSessionValid(const Glib::ustring& token) {
 }
 
 Glib::ustring AuthManager::hashPassword(const Glib::ustring& password) {
-    // Simple SHA-256 hashing (in production, use bcrypt or similar)
-    unsigned char hash[SHA256_DIGEST_LENGTH];
-    SHA256_CTX sha256;
-    SHA256_Init(&sha256);
-    SHA256_Update(&sha256, password.c_str(), password.length());
-    SHA256_Final(hash, &sha256);
+    // Use EVP_MD_CTX for SHA-256 hashing (more modern OpenSSL API)
+    unsigned char hash[EVP_MAX_MD_SIZE];
+    unsigned int hash_len;
+    EVP_MD_CTX* mdctx = EVP_MD_CTX_new();
+
+    if (!mdctx) {
+        std::cerr << "Error creating EVP_MD_CTX" << std::endl;
+        return "";
+    }
+
+    if (1 != EVP_DigestInit_ex(mdctx, EVP_sha256(), nullptr)) {
+        std::cerr << "Error initializing digest" << std::endl;
+        EVP_MD_CTX_free(mdctx);
+        return "";
+    }
+
+    if (1 != EVP_DigestUpdate(mdctx, password.c_str(), password.length())) {
+        std::cerr << "Error updating digest" << std::endl;
+        EVP_MD_CTX_free(mdctx);
+        return "";
+    }
+
+    if (1 != EVP_DigestFinal_ex(mdctx, hash, &hash_len)) {
+        std::cerr << "Error finalizing digest" << std::endl;
+        EVP_MD_CTX_free(mdctx);
+        return "";
+    }
+
+    EVP_MD_CTX_free(mdctx);
     
     std::ostringstream oss;
-    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
+    for (unsigned int i = 0; i < hash_len; i++) {
         oss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(hash[i]);
     }
     

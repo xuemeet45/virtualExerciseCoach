@@ -222,3 +222,24 @@ std::vector<std::map<std::string, std::string>> DatabaseManager::fetch_statistic
     PQclear(res);
     return statistics;
 }
+
+bool DatabaseManager::update_user_profile(const User& user) {
+    if (!conn) {
+        std::cerr << "Database connection not established." << std::endl;
+        return false;
+    }
+
+    std::ostringstream oss;
+    oss << "UPDATE users SET email = '" << user.get_email()
+        << "', first_name = '" << user.get_first_name()
+        << "', last_name = '" << user.get_last_name()
+        << "' WHERE id = " << user.get_id() << ";";
+
+    PGresult* res = PQexec(conn, oss.str().c_str());
+    bool success = PQresultStatus(res) == PGRES_COMMAND_OK;
+    if (!success) {
+        std::cerr << "Failed to update user profile: " << PQerrorMessage(conn) << std::endl;
+    }
+    PQclear(res);
+    return success;
+}
