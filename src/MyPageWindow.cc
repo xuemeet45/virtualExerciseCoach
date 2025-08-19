@@ -3,7 +3,7 @@
 #include "DatabaseManager.h"
 #include <iostream>
 
-MyPageWindow::MyPageWindow()
+MyPageWindow::MyPageWindow(Gtk::Window& parent) // Accept parent parameter
     : main_box(Gtk::Orientation::VERTICAL),
       profile_box(Gtk::Orientation::VERTICAL),
       stats_box(Gtk::Orientation::VERTICAL),
@@ -14,6 +14,7 @@ MyPageWindow::MyPageWindow()
     set_modal(true);
     set_deletable(true);
     set_resizable(true);
+    set_transient_for(parent); // Set MyPageWindow as transient for the main window
     
     // Profile section
     profile_title.set_markup("<big><b>プロフィール</b></big>");
@@ -198,8 +199,7 @@ void MyPageWindow::on_edit_profile_clicked() {
 }
 
 void MyPageWindow::on_change_password_clicked() {
-    // TODO: Implement password change
-    std::cout << "Change password clicked" << std::endl;
+    m_signal_change_password_request.emit();
 }
 
 void MyPageWindow::on_view_history_clicked() {
@@ -214,4 +214,8 @@ void MyPageWindow::on_back_clicked() {
 void MyPageWindow::on_logout_clicked() {
     AuthManager::getInstance().logout();
     hide();
-} 
+}
+
+sigc::signal<void()>& MyPageWindow::signal_change_password_request() {
+    return m_signal_change_password_request;
+}

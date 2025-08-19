@@ -3,13 +3,17 @@
 
 #include <gtkmm.h>
 #include "User.h"
+#include "PasswordChangeWindow.h" // Include the new password change window header
 
 class MyPageWindow : public Gtk::Window {
 public:
-    MyPageWindow();
+    explicit MyPageWindow(Gtk::Window& parent); // Add parent parameter
     
     void updateUserInfo(const User& user);
     void refreshStatistics();
+
+    // Signal to emit when password change is requested
+    sigc::signal<void()>& signal_change_password_request();
 
 private:
     void on_edit_profile_clicked();
@@ -17,6 +21,9 @@ private:
     void on_view_history_clicked();
     void on_back_clicked();
     void on_logout_clicked();
+
+    // Signal
+    sigc::signal<void()> m_signal_change_password_request;
     
     // UI elements
     Gtk::Box main_box;
@@ -50,4 +57,4 @@ private:
     User current_user;
 };
 
-#endif // MYPAGEWINDOW_H 
+#endif // MYPAGEWINDOW_H

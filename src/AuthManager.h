@@ -15,6 +15,7 @@ public:
                      const Glib::ustring& password, const Glib::ustring& first_name, 
                      const Glib::ustring& last_name);
     void logout();
+    bool change_password(int user_id, const std::string& old_password, const std::string& new_password);
     
     // JWT token methods
     Glib::ustring generateJWTToken(const User& user);
@@ -30,6 +31,7 @@ public:
     User getCurrentUser() const { return current_user; }
     bool isLoggedIn() const { return !current_token.empty(); }
     Glib::ustring getCurrentToken() const { return current_token; }
+    int get_current_user_id() const;
     
     // Password hashing
     Glib::ustring hashPassword(const Glib::ustring& password);
@@ -54,4 +56,4 @@ private:
     Glib::ustring generateRandomString(int length);
 };
 
-#endif // AUTHMANAGER_H 
+#endif // AUTHMANAGER_H

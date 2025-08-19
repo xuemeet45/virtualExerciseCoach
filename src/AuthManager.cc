@@ -9,6 +9,8 @@
 #include <ctime>
 #include <cstring>
 
+AuthManager* global_auth_manager = nullptr; // Define the global instance here
+
 AuthManager& AuthManager::getInstance() {
     static AuthManager instance;
     return instance;
@@ -71,6 +73,40 @@ void AuthManager::logout() {
     }
     current_user = User();
     current_token.clear();
+}
+
+bool AuthManager::change_password(int user_id, const std::string& old_password, const std::string& new_password) {
+    if (!global_db_manager) return false;
+
+    // Fetch user to verify old password
+    std::ostringstream fetch_oss;
+    fetch_oss << "SELECT id, username, email, password_hash, first_name, last_name, created_at, last_login, is_active "
+              << "FROM users WHERE id = " << user_id;
+    auto users = global_db_manager->fetch_users(fetch_oss.str());
+
+    if (users.empty()) {
+        std::cerr << "AuthManager: User not found for ID " << user_id << std::endl;
+        return false;
+    }
+
+    const User& user_in_db = users[0];
+    if (!verifyPassword(old_password, user_in_db.get_password_hash())) {
+        std::cerr << "AuthManager: Old password verification failed for user ID " << user_id << std::endl;
+        return false;
+    }
+
+    // Hash the new password
+    Glib::ustring hashed_new_password = hashPassword(new_password);
+
+    // Update password in the database
+    std::ostringstream update_oss;
+    update_oss << "UPDATE users SET password_hash = '" << hashed_new_password << "' WHERE id = " << user_id;
+
+    return global_db_manager->execute_query(update_oss.str());
+}
+
+int AuthManager::get_current_user_id() const {
+    return current_user.get_id();
 }
 
 Glib::ustring AuthManager::generateJWTToken(const User& user) {
@@ -283,4 +319,4 @@ Glib::ustring AuthManager::generateRandomString(int length) {
     }
     
     return result;
-} 
+}

@@ -188,7 +188,10 @@ void VirtualFitnessCoachWindow::show_exercise_detail(const Exercise& exercise) {
 
 void VirtualFitnessCoachWindow::on_my_page_clicked() {
     if (!my_page_window) {
-        my_page_window = std::make_unique<MyPageWindow>();
+        my_page_window = std::make_unique<MyPageWindow>(*this); // Pass *this as parent
+        // Connect the signal from MyPageWindow to show the password change window
+        my_page_window->signal_change_password_request().connect(
+            sigc::mem_fun(*this, &VirtualFitnessCoachWindow::show_password_change_window));
     }
     
     if (AuthManager::getInstance().isLoggedIn()) {
@@ -196,6 +199,32 @@ void VirtualFitnessCoachWindow::on_my_page_clicked() {
     }
     
     my_page_window->present();
+}
+
+void VirtualFitnessCoachWindow::show_password_change_window() {
+    if (!password_change_window) {
+        password_change_window = std::make_unique<PasswordChangeWindow>(*this); // Pass *this as parent
+        password_change_window->set_modal(true);
+
+        // Connect signals from PasswordChangeWindow
+        password_change_window->signal_password_change_success().connect([this]() {
+            // Password changed, hide password change window and refresh MyPage
+            password_change_window->hide();
+            if (my_page_window) {
+                my_page_window->updateUserInfo(AuthManager::getInstance().getCurrentUser());
+                my_page_window->present(); // Show MyPage again
+            }
+        });
+
+        password_change_window->signal_back_to_mypage().connect([this]() {
+            // User cancelled, hide password change window and show MyPage
+            password_change_window->hide();
+            if (my_page_window) {
+                my_page_window->present(); // Show MyPage again
+            }
+        });
+    }
+    password_change_window->present();
 }
 
 void VirtualFitnessCoachWindow::on_logout_clicked() {

@@ -1,3 +1,0 @@
-/Users/monsoon/Documents/gtkmm-sample/build/CMakeFiles/VirtualExerciseCoach.dir
-/Users/monsoon/Documents/gtkmm-sample/build/CMakeFiles/edit_cache.dir
-/Users/monsoon/Documents/gtkmm-sample/build/CMakeFiles/rebuild_cache.dir

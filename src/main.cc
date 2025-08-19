@@ -5,6 +5,8 @@
 #include "RegisterWindow.h"
 #include "AuthManager.h"
 
+extern AuthManager* global_auth_manager; // Declare global_auth_manager
+
 class VirtualFitnessCoachApp : public Gtk::Application {
 protected:
     VirtualFitnessCoachApp() : Gtk::Application("org.example.VirtualFitnessCoach") {}
@@ -70,12 +72,16 @@ public:
 int main(int argc, char* argv[]) {
     // Initialize the global DatabaseManager instance
     global_db_manager = new DatabaseManager("dbname=fitnessdb user=admin password=admin hostaddr=127.0.0.1 port=5432");
+    
+    // Initialize the global AuthManager instance
+    global_auth_manager = &AuthManager::getInstance();
 
     auto app = VirtualFitnessCoachApp::create();
     int result = app->run(argc, argv);
 
     // Clean up the global DatabaseManager instance
     delete global_db_manager;
+    // No need to delete global_auth_manager as it's a static singleton
 
     return result;
 }

@@ -31,6 +31,7 @@ clang++ -std=c++17 \
     src/LoginWindow.cc \
     src/RegisterWindow.cc \
     src/MyPageWindow.cc \
+    src/PasswordChangeWindow.cc \
     src/User.cc \
     -o VirtualExerciseCoach \
     $(pkg-config gtkmm-4.0 --libs) \
