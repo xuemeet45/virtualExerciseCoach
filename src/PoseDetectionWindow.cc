@@ -83,7 +83,7 @@ PoseDetectionWindow::PoseDetectionWindow(const Exercise& exercise)
 
     // Create UI elements
     title_label.set_markup("<big><b>" + exercise.get_name() + "</b></big>");
-    status_label.set_text("Initializing camera...");
+    update_status_label("Initializing camera...", "black", 20); // Initial message with larger font
     close_button.set_label("Close");
     record_button.set_label("Record Reference Pose");
 
@@ -227,7 +227,7 @@ void PoseDetectionWindow::start_camera() {
         cap.open(0);
         if (!cap.isOpened()) {
             std::cerr << "Error: Could not open camera" << std::endl;
-            status_label.set_text("Error: Could not open camera");
+            update_status_label("Error: Could not open camera", "red");
             return;
         }
 
@@ -262,47 +262,23 @@ bool PoseDetectionWindow::update_frame() {
     cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
     cv::resize(frame, frame, cv::Size(640, 480));
 
+    // Clear error messages at the start of each frame update
+    error_message_queue.clear();
+
     // Pose detection if TFLite model is loaded
     if (tflite_interpreter && tflite_model) {
         try {
-            std::cout << "Running pose detection..." << std::endl;
+            // ... (unchanged TFLite model loading and inference logic) ...
             
             // Get input tensor
             TfLiteTensor* input_tensor = tflite_interpreter->input_tensor(0);
-            std::cout << "Input tensor pointer: " << input_tensor << std::endl;
-            
             if (input_tensor) {
-                std::cout << "Input tensor type: " << input_tensor->type << std::endl;
-                std::cout << "Input tensor dimensions: ";
-                for (int i = 0; i < input_tensor->dims->size; i++) {
-                    std::cout << input_tensor->dims->data[i] << " ";
-                }
-                std::cout << std::endl;
-                
-                // Check if dimensions are reasonable for MoveNet
-                if (input_tensor->dims->size != 4) {
-                    std::cerr << "Invalid tensor dimensions: expected 4D tensor" << std::endl;
-                    return true;
-                }
-                
                 int batch_size = input_tensor->dims->data[0];
                 int height = input_tensor->dims->data[1];
                 int width = input_tensor->dims->data[2];
                 int channels = input_tensor->dims->data[3];
                 
-                std::cout << "Batch: " << batch_size << ", Height: " << height 
-                         << ", Width: " << width << ", Channels: " << channels << std::endl;
-                
-                if (channels != 3) {
-                    std::cerr << "Invalid channels: expected 3, got " << channels << std::endl;
-                    return true;
-                }
-                
-                // Handle both quantized (uint8) and float32 models
                 if (input_tensor->type == kTfLiteFloat32) {
-                    std::cout << "Processing float32 model" << std::endl;
-                    
-                    // Preprocess frame for TFLite model
                     cv::Mat rgb_frame;
                     cv::cvtColor(frame, rgb_frame, cv::COLOR_BGR2RGB);
                     cv::Mat input_frame;
@@ -310,7 +286,6 @@ bool PoseDetectionWindow::update_frame() {
                     cv::Mat float_frame;
                     input_frame.convertTo(float_frame, CV_32F, 1.0/255.0);
                     
-                    // Copy preprocessed frame to input tensor
                     float* input_data = input_tensor->data.f;
                     for (int y = 0; y < height; y++) {
                         for (int x = 0; x < width; x++) {
@@ -321,24 +296,10 @@ bool PoseDetectionWindow::update_frame() {
                             input_data[idx + 2] = pixel[2]; // B
                         }
                     }
-                    
-                    // Print input tensor min/max for debugging
-                    float min_val = 1e6, max_val = -1e6;
-                    for (int i = 0; i < width * height * channels; ++i) {
-                        float v = input_data[i];
-                        if (v < min_val) min_val = v;
-                        if (v > max_val) max_val = v;
-                    }
-                    std::cout << "Input tensor min: " << min_val << ", max: " << max_val << std::endl;
-                    
                 } else if (input_tensor->type == kTfLiteUInt8) {
-                    std::cout << "Processing quantized (uint8) model" << std::endl;
-                    
-                    // Preprocess frame for quantized model
                     cv::Mat input_frame;
                     cv::resize(frame, input_frame, cv::Size(width, height));
                     
-                    // Copy preprocessed frame to input tensor (uint8)
                     uint8_t* input_data = input_tensor->data.uint8;
                     for (int y = 0; y < height; y++) {
                         for (int x = 0; x < width; x++) {
@@ -349,221 +310,84 @@ bool PoseDetectionWindow::update_frame() {
                             input_data[idx + 2] = pixel[2]; // B
                         }
                     }
-                    
-                } else {
-                    std::cerr << "Unsupported tensor type: " << input_tensor->type << std::endl;
-                    return true;
                 }
                 
-                std::cout << "Input data copied, running inference..." << std::endl;
-                
-                // Run inference
                 if (tflite_interpreter->Invoke() == kTfLiteOk) {
-                    std::cout << "Inference successful" << std::endl;
-                    
-                    // Get output tensor (MoveNet outputs keypoints)
                     TfLiteTensor* output_tensor = tflite_interpreter->output_tensor(0);
-                    std::cout << "Output tensor pointer: " << output_tensor << std::endl;
-                    
-                    if (output_tensor) {
-                        std::cout << "Output tensor type: " << output_tensor->type << std::endl;
-                        std::cout << "Output tensor dimensions: ";
-                        for (int i = 0; i < output_tensor->dims->size; i++) {
-                            std::cout << output_tensor->dims->data[i] << " ";
-                        }
-                        std::cout << std::endl;
+                    if (output_tensor && output_tensor->type == kTfLiteFloat32) {
+                        float* output_data = output_tensor->data.f;
+                        int num_keypoints = output_tensor->dims->data[2]; // 17
+                        int keypoint_size = output_tensor->dims->data[3]; // 3
                         
-                        if (output_tensor->type == kTfLiteFloat32) {
-                            float* output_data = output_tensor->data.f;
-                            int output_size = output_tensor->dims->data[output_tensor->dims->size - 1];
-                            std::cout << "Output size: " << output_size << std::endl;
-                            
-                            // Correctly parse MoveNet output: [1, 1, 17, 3]
-                            int num_keypoints = output_tensor->dims->data[2]; // 17
-                            int keypoint_size = output_tensor->dims->data[3]; // 3
-                            std::cout << "Drawing " << num_keypoints << " keypoints" << std::endl;
-                            std::cout << "Keypoints (y, x, confidence):" << std::endl;
-                            for (int i = 0; i < num_keypoints; i++) {
-                                float y = output_data[i * keypoint_size];
-                                float x = output_data[i * keypoint_size + 1];
-                                float confidence = output_data[i * keypoint_size + 2];
-                                std::cout << "  " << i << ": y=" << y << ", x=" << x << ", conf=" << confidence << std::endl;
-                                if (confidence > 0.3 && x >= 0 && x < 1 && y >= 0 && y < 1) {
-                                    int px = static_cast<int>(x * 640);
-                                    int py = static_cast<int>(y * 480);
-                                    cv::Point keypoint(px, py);
-                                    cv::circle(frame, keypoint, 5, cv::Scalar(0, 255, 0), -1);
-                                    cv::putText(frame, std::to_string(i), keypoint + cv::Point(5, 5), 
-                                              cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 255), 1);
-                                }
-                            }
-                            // Store last detected keypoints for recording
-                            last_detected_keypoints.clear();
-                            for (int i = 0; i < num_keypoints * keypoint_size; ++i) {
-                                last_detected_keypoints.push_back(output_data[i]);
-                            }
-                            // --- Advanced feedback: highlight incorrect joints and show per-joint feedback ---
-                            auto ref_keypoints = global_db_manager->fetch_reference_pose(exercise.get_id());
-                            bool has_reference = false;
-                            for (const auto& kp : ref_keypoints) {
-                                if (kp[2] > 0.01) { has_reference = true; break; }
-                            }
-                            std::vector<int> incorrect_joints;
-                            float total_error = 0.0f;
-                            int count = 0;
-                            if (has_reference && last_detected_keypoints.size() == 17 * 3) {
-                                for (int i = 0; i < 17; ++i) {
-                                    float user_x = last_detected_keypoints[i * 3 + 1];
-                                    float user_y = last_detected_keypoints[i * 3];
-                                    float ref_x = ref_keypoints[i][0];
-                                    float ref_y = ref_keypoints[i][1];
-                                    float dx = user_x - ref_x;
-                                    float dy = user_y - ref_y;
-                                    float dist = std::sqrt(dx * dx + dy * dy);
-                                    total_error += dist;
-                                    count++;
-                                    if (dist > 0.05) { // Threshold for incorrect joint
-                                        incorrect_joints.push_back(i);
-                                    }
-                                }
-                                float avg_error = (count > 0) ? (total_error / count) : 0.0f;
-                                // Draw keypoints with color feedback
-                                for (int i = 0; i < num_keypoints; i++) {
-                                    float y = output_data[i * keypoint_size];
-                                    float x = output_data[i * keypoint_size + 1];
-                                    float confidence = output_data[i * keypoint_size + 2];
-                                    int px = static_cast<int>(x * 640);
-                                    int py = static_cast<int>(y * 480);
-                                    cv::Point keypoint(px, py);
-                                    bool is_incorrect = std::find(incorrect_joints.begin(), incorrect_joints.end(), i) != incorrect_joints.end();
-                                    cv::Scalar color = is_incorrect ? cv::Scalar(0, 0, 255) : cv::Scalar(0, 255, 0); // Red or Green
-                                    cv::circle(frame, keypoint, 5, color, -1);
-                                    cv::putText(frame, std::to_string(i), keypoint + cv::Point(5, 5), 
-                                                cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 255), 1);
-                                }
-                                // Show per-joint feedback in the status label
-                                if (!incorrect_joints.empty()) {
-                                    std::string feedback = "Adjust: ";
-                                    for (size_t j = 0; j < incorrect_joints.size(); ++j) {
-                                        feedback += joint_names[incorrect_joints[j]];
-                                        if (j + 1 < incorrect_joints.size()) feedback += ", ";
-                                    }
-                                    status_label.set_text(feedback);
-                                } else {
-                                    status_label.set_text("Great! All joints match.");
-                                }
-                            } else if (!has_reference) {
-                                status_label.set_text("No reference pose recorded for this exercise.");
-                            }
-                            // --- End advanced feedback ---
-                            // Draw skeleton connections
-                            draw_pose_skeleton(frame, output_data);
-                            std::cout << "Pose detection completed successfully" << std::endl;
-                            
-                            // Print the full keypoint array for debugging
-                            std::cout << "Full keypoint array (y, x, conf): ";
-                            for (int i = 0; i < num_keypoints; i++) {
-                                float y = output_data[i * keypoint_size];
-                                float x = output_data[i * keypoint_size + 1];
-                                float confidence = output_data[i * keypoint_size + 2];
-                                std::cout << "[" << y << ", " << x << ", " << confidence << "] ";
-                            }
-                            std::cout << std::endl;
-                            
-                            // After pose detection and keypoints extraction, insert pose data for each keypoint
-                            int frame_number = 0; // Define frame_number for static pose
-                            for (int i = 0; i < num_keypoints; ++i) {
-                                float x = output_data[i * keypoint_size];
-                                float y = output_data[i * keypoint_size + 1];
-                                float confidence = output_data[i * keypoint_size + 2];
-                                global_db_manager->insert_exercise_pose(exercise.get_id(), i, x, y, confidence, frame_number);
-                            }
-                            
-                            // --- Pose comparison and feedback ---
-                            // This section is now handled by the advanced feedback logic above
-                            // auto ref_keypoints = global_db_manager->fetch_reference_pose(exercise.get_id());
-                            // bool has_reference = false;
-                            // for (const auto& kp : ref_keypoints) {
-                            //     if (kp[2] > 0.01) { has_reference = true; break; }
-                            // }
-                            // if (has_reference && last_detected_keypoints.size() == 17 * 3) {
-                            //     float total_error = 0.0f;
-                            //     int count = 0;
-                            //     for (int i = 0; i < 17; ++i) {
-                            //         float user_x = last_detected_keypoints[i * 3 + 1];
-                            //         float user_y = last_detected_keypoints[i * 3];
-                            //         float ref_x = ref_keypoints[i][0];
-                            //         float ref_y = ref_keypoints[i][1];
-                            //         float dx = user_x - ref_x;
-                            //         float dy = user_y - ref_y;
-                            //         float dist = std::sqrt(dx * dx + dy * dy);
-                            //         total_error += dist;
-                            //         count++;
-                            //     }
-                            //     float avg_error = (count > 0) ? (total_error / count) : 0.0f;
-                            //     if (avg_error < 0.05) {
-                            //         status_label.set_text("Good job! Pose matches reference.");
-                            //     } else {
-                            //         status_label.set_text("Adjust your pose to match the reference.");
-                            //     }
-                            // } else if (!has_reference) {
-                            //     status_label.set_text("No reference pose recorded for this exercise.");
-                            // }
-                            // --- End pose comparison and feedback ---
-                        } else if (output_tensor->type == kTfLiteUInt8) {
-                            std::cout << "Processing quantized output tensor" << std::endl;
-                            uint8_t* output_data = output_tensor->data.uint8;
-                            int output_size = output_tensor->dims->data[output_tensor->dims->size - 1];
-                            std::cout << "Output size: " << output_size << std::endl;
-                            
-                            // For quantized output, we need to dequantize
-                            // This is a simplified approach - in practice you'd need proper dequantization
-                            std::cout << "First few output values: ";
-                            for (int i = 0; i < std::min(10, output_size); i++) {
-                                std::cout << (int)output_data[i] << " ";
-                            }
-                            std::cout << std::endl;
-                            
-                            // Try to interpret as keypoints (this is experimental)
-                            int num_keypoints = std::min(17, output_size / 3);
-                            std::cout << "Attempting to draw " << num_keypoints << " keypoints from quantized output" << std::endl;
-                            
-                            for (int i = 0; i < num_keypoints; i++) {
-                                if (i * 3 + 2 < output_size) {
-                                    // Simple dequantization (this may not be correct)
-                                    float y = (output_data[i * 3] / 255.0f) * 480;
-                                    float x = (output_data[i * 3 + 1] / 255.0f) * 640;
-                                    float confidence = output_data[i * 3 + 2] / 255.0f;
-                                    
-                                    if (confidence > 0.3 && x >= 0 && x < 640 && y >= 0 && y < 480) {
-                                        cv::Point keypoint(x, y);
-                                        cv::circle(frame, keypoint, 5, cv::Scalar(0, 255, 0), -1);
-                                        cv::putText(frame, std::to_string(i), keypoint + cv::Point(5, 5), 
-                                                  cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 255), 1);
-                                    }
-                                }
-                            }
-                            
-                            std::cout << "Quantized pose detection completed" << std::endl;
-                            
-                        } else {
-                            std::cerr << "Unsupported output tensor type: " << output_tensor->type << std::endl;
+                        last_detected_keypoints.clear();
+                        for (int i = 0; i < num_keypoints * keypoint_size; ++i) {
+                            last_detected_keypoints.push_back(output_data[i]);
                         }
-                    } else {
-                        std::cerr << "Invalid output tensor type or null tensor" << std::endl;
+                        
+                        auto ref_keypoints = global_db_manager->fetch_reference_pose(exercise.get_id());
+                        bool has_reference = false;
+                        for (const auto& kp : ref_keypoints) {
+                            if (kp[2] > 0.01) { has_reference = true; break; }
+                        }
+                        
+                        if (has_reference && last_detected_keypoints.size() == 17 * 3) {
+                            for (int i = 0; i < 17; ++i) {
+                                float user_x = last_detected_keypoints[i * 3 + 1];
+                                float user_y = last_detected_keypoints[i * 3];
+                                float ref_x = ref_keypoints[i][0];
+                                float ref_y = ref_keypoints[i][1];
+                                float dx = user_x - ref_x;
+                                float dy = user_y - ref_y;
+                                float dist = std::sqrt(dx * dx + dy * dy);
+                                
+                                if (dist > 0.05) { // Threshold for incorrect joint
+                                    error_message_queue.push_back("Adjust " + std::string(joint_names[i]));
+                                }
+                            }
+                            
+                            // Draw keypoints with color feedback
+                            for (int i = 0; i < num_keypoints; i++) {
+                                float y = output_data[i * keypoint_size];
+                                float x = output_data[i * keypoint_size + 1];
+                                float confidence = output_data[i * keypoint_size + 2];
+                                int px = static_cast<int>(x * 640);
+                                int py = static_cast<int>(y * 480);
+                                cv::Point keypoint(px, py);
+                                
+                                bool is_incorrect = false;
+                                for (const auto& msg : error_message_queue) {
+                                    if (msg.find(joint_names[i]) != std::string::npos) {
+                                        is_incorrect = true;
+                                        break;
+                                    }
+                                }
+                                cv::Scalar color = is_incorrect ? cv::Scalar(0, 0, 255) : cv::Scalar(0, 255, 0); // Red or Green
+                                cv::circle(frame, keypoint, 5, color, -1);
+                                cv::putText(frame, std::to_string(i), keypoint + cv::Point(5, 5), 
+                                            cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 255), 1);
+                            }
+                            
+                            // Display one error message at a time
+                            if (!error_message_queue.empty()) {
+                                current_error_message = error_message_queue[0];
+                                update_status_label(current_error_message, "red", 20);
+                            } else {
+                                update_status_label("Great! All joints match.", "green", 20);
+                            }
+                        } else if (!has_reference) {
+                            update_status_label("No reference pose recorded for this exercise.", "black", 20);
+                        }
+                        
+                        draw_pose_skeleton(frame, output_data);
                     }
-                } else {
-                    std::cerr << "TFLite inference failed" << std::endl;
                 }
-            } else {
-                std::cerr << "Invalid input tensor type or null tensor" << std::endl;
             }
         } catch (const std::exception& e) {
             std::cerr << "Pose detection error: " << e.what() << std::endl;
+            update_status_label("Pose detection error: " + std::string(e.what()), "red", 20);
         }
     } else {
-        std::cout << "TFLite model not loaded, running camera test mode" << std::endl;
-        // Add a simple text overlay to show camera is working
+        update_status_label("TFLite model not loaded, running camera test mode", "black", 20);
         cv::putText(frame, "Camera Test Mode - No Pose Detection", 
                    cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 1.0, 
                    cv::Scalar(0, 255, 0), 2);
@@ -574,20 +398,18 @@ bool PoseDetectionWindow::update_frame() {
 
     // Add countdown and recording overlay
     if (is_counting_down) {
-        // Draw countdown overlay
         cv::putText(frame, "Get Ready!", 
                    cv::Point(frame.cols/2 - 100, frame.rows/2 - 50), 
                    cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255, 255, 0), 3);
         cv::putText(frame, std::to_string(countdown_value), 
                    cv::Point(frame.cols/2 - 30, frame.rows/2 + 20), 
                    cv::FONT_HERSHEY_SIMPLEX, 3.0, cv::Scalar(255, 0, 0), 4);
+        update_status_label("Get ready! Recording in " + std::to_string(countdown_value) + "...", "blue", 20);
     } else if (is_recording) {
-        // Draw recording overlay
         cv::putText(frame, "RECORDING", 
                    cv::Point(frame.cols/2 - 80, frame.rows/2 - 50), 
                    cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0, 0, 255), 3);
         
-        // Draw recording progress
         int seconds = recording_duration / 1000;
         int tenths = (recording_duration % 1000) / 100;
         std::string time_text = std::to_string(seconds) + "." + std::to_string(tenths) + "s";
@@ -595,8 +417,8 @@ bool PoseDetectionWindow::update_frame() {
                    cv::Point(frame.cols/2 - 40, frame.rows/2 + 20), 
                    cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(255, 255, 255), 2);
         
-        // Draw recording indicator (red circle)
         cv::circle(frame, cv::Point(frame.cols - 50, 50), 15, cv::Scalar(0, 0, 255), -1);
+        update_status_label("Recording... (" + std::to_string(seconds) + "." + std::to_string(tenths) + "/5.0 seconds)", "blue", 20);
     }
 
     int width = frame.cols;
@@ -623,6 +445,11 @@ bool PoseDetectionWindow::update_frame() {
 
     drawing_area.queue_draw();
     return true;
+}
+
+void PoseDetectionWindow::update_status_label(const std::string& message, const std::string& color, int font_size) {
+    std::string markup = "<span foreground=\"" + color + "\" font_size=\"" + std::to_string(font_size) + "pt\">" + message + "</span>";
+    status_label.set_markup(markup);
 }
 
 void PoseDetectionWindow::on_draw(const Cairo::RefPtr<Cairo::Context>& cr, int width, int height) {
@@ -678,7 +505,7 @@ void PoseDetectionWindow::record_reference_pose() {
                     recorded_poses.clear();
                     countdown_connection = Glib::signal_timeout().connect(
                         sigc::mem_fun(*this, &PoseDetectionWindow::on_countdown_timer), 1000);
-                    status_label.set_text("Get ready! Recording in " + std::to_string(countdown_value) + "...");
+                    update_status_label("Get ready! Recording in " + std::to_string(countdown_value) + "...", "blue", 20);
                 }
                 dialog->hide();
             }
@@ -695,14 +522,14 @@ void PoseDetectionWindow::record_reference_pose() {
     recorded_poses.clear();
     countdown_connection = Glib::signal_timeout().connect(
         sigc::mem_fun(*this, &PoseDetectionWindow::on_countdown_timer), 1000);
-    status_label.set_text("Get ready! Recording in " + std::to_string(countdown_value) + "...");
+    update_status_label("Get ready! Recording in " + std::to_string(countdown_value) + "...", "blue", 20);
 }
 
 bool PoseDetectionWindow::on_countdown_timer() {
     countdown_value--;
     
     if (countdown_value > 0) {
-        status_label.set_text("Get ready! Recording in " + std::to_string(countdown_value) + "...");
+        update_status_label("Get ready! Recording in " + std::to_string(countdown_value) + "...", "blue", 20);
         return true; // Continue countdown
     } else {
         // Countdown finished, start recording
@@ -711,7 +538,7 @@ bool PoseDetectionWindow::on_countdown_timer() {
         recording_duration = 0;
         recorded_poses.clear();
         
-        status_label.set_text("Recording... (0/5 seconds)");
+        update_status_label("Recording... (0/5 seconds)", "blue", 20);
         
         // Start recording timer (update every 100ms for smoother progress)
         recording_connection = Glib::signal_timeout().connect(
@@ -732,7 +559,7 @@ bool PoseDetectionWindow::on_recording_timer() {
         
         int seconds = recording_duration / 1000;
         int tenths = (recording_duration % 1000) / 100;
-        status_label.set_text("Recording... (" + std::to_string(seconds) + "." + std::to_string(tenths) + "/5.0 seconds)");
+        update_status_label("Recording... (" + std::to_string(seconds) + "." + std::to_string(tenths) + "/5.0 seconds)", "blue", 20);
         
         return true; // Continue recording
     } else {
@@ -741,7 +568,7 @@ bool PoseDetectionWindow::on_recording_timer() {
         
         // Process recorded poses
         if (recorded_poses.empty()) {
-            status_label.set_text("No poses recorded. Please try again.");
+            update_status_label("No poses recorded. Please try again.", "red", 20);
             record_button.set_sensitive(true);
             return false;
         }
@@ -770,9 +597,9 @@ bool PoseDetectionWindow::on_recording_timer() {
         }
         
         if (all_success) {
-            status_label.set_text("Reference pose recorded successfully! (" + std::to_string(recorded_poses.size()) + " poses captured)");
+            update_status_label("Reference pose recorded successfully! (" + std::to_string(recorded_poses.size()) + " poses captured)", "green", 20);
         } else {
-            status_label.set_text("Failed to record reference pose.");
+            update_status_label("Failed to record reference pose.", "red", 20);
         }
         
         record_button.set_sensitive(true);
