@@ -1,0 +1,66 @@
+/* General styling for the application */
+window {
+    background-color: #e0f7fa; /* Very light accent blue background for windows */
+}
+
+/* MyPageWindow specific styles */
+.mypage-header {
+    font-size: 24pt;
+    font-weight: bold;
+    color: #3f55f1; /* Primary blue for titles */
+    margin-bottom: 15px;
+    padding-top: 10px;
+}
+
+.mypage-section-title {
+    font-size: 18pt;
+    font-weight: bold;
+    color: #3f55f1; /* Primary blue for section titles */
+    margin-bottom: 10px;
+    margin-top: 15px;
+}
+
+.mypage-label {
+    font-size: 12pt;
+    color: #000000; /* Black for general text for maximum contrast */
+    font-weight: bold; /* Make labels bold for better visibility */
+    margin-bottom: 5px;
+}
+
+.mypage-button {
+    background-color: #3f55f1; /* Primary blue for buttons */
+    color: black; /* Changed to black for better visibility as requested by user */
+    font-size: 13pt; /* Slightly larger font for buttons */
+    font-weight: bold; /* Make button text bold */
+    padding: 10px 20px; /* Increased padding for better touch target */
+    border-radius: 5px;
+    margin-bottom: 10px; /* Increased margin for better separation */
+}
+
+.mypage-button:hover {
+    background-color: #2a3bbd; /* Slightly darker blue on hover */
+}
+
+.mypage-button.destructive {
+    background-color: #f44336; /* Red for logout/destructive actions */
+}
+
+.mypage-button.destructive:hover {
+    background-color: #d32f2f; /* Darker red on hover */
+}
+
+/* Box styling for visual grouping */
+.mypage-box-frame {
+    border: 1px solid #8bf0ea; /* Accent blue border */
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    background-color: white;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+/* Specific colors from palette */
+.color-primary { color: #3f55f1; }
+.color-accent { color: #8bf0ea; }
+.color-success { color: #a4cd81; }
+.color-info { color: #2196f3; } /* A shade of blue for 'opened' status */

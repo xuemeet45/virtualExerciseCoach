@@ -2197,10 +2197,11 @@ CMakeFiles/VirtualExerciseCoach.dir/src/MyPageWindow.cc.o: \
   /Users/monsoon/Documents/gtkmm-sample/src/User.h \
   /Users/monsoon/Documents/gtkmm-sample/src/PasswordChangeWindow.h \
   /Users/monsoon/Documents/gtkmm-sample/src/ProfileEditWindow.h \
-  /Users/monsoon/Documents/gtkmm-sample/src/AuthManager.h \
+  /Users/monsoon/Documents/gtkmm-sample/src/ExerciseHistoryWindow.h \
   /Users/monsoon/Documents/gtkmm-sample/src/DatabaseManager.h \
   /opt/homebrew/opt/postgresql@14/include/postgresql@14/libpq-fe.h \
   /opt/homebrew/opt/postgresql@14/include/postgresql@14/postgres_ext.h \
   /opt/homebrew/opt/postgresql@14/include/postgresql@14/pg_config_ext.h \
   /Users/monsoon/Documents/gtkmm-sample/src/Exercise.h \
+  /Users/monsoon/Documents/gtkmm-sample/src/AuthManager.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/iostream

@@ -5,11 +5,13 @@
 #include <memory>
 #include <vector>
 #include "DatabaseManager.h"
-#include "PoseDetectionWindow.h"
+// #include "PoseDetectionWindow.h" // PoseDetectionWindow will be opened by ExerciseDetailWindow
 #include "MyPageWindow.h"
 #include "AuthManager.h"
-#include "PasswordChangeWindow.h" // Include the new password change window header
-#include "ProfileEditWindow.h"    // Include the new profile edit window header
+#include "PasswordChangeWindow.h"
+#include "ProfileEditWindow.h"
+#include "ExerciseDetailWindow.h" // Include ExerciseDetailWindow
+#include "ExerciseHistoryWindow.h" // Include ExerciseHistoryWindow
 
 class VirtualFitnessCoachWindow : public Gtk::ApplicationWindow {
 public:
@@ -23,6 +25,7 @@ private:
     void show_exercise_detail(const Exercise& exercise);
     void on_my_page_clicked();
     void on_logout_clicked();
+    void on_history_clicked(); // New method to show exercise history window
     void show_password_change_window(); // New method to show password change window
     void show_profile_edit_window(const User& user); // New method to show profile edit window
     void on_profile_update_success(const User& updated_user); // New method to handle profile update success
@@ -34,10 +37,12 @@ private:
     Gtk::Box exercise_list_page;
     Gtk::ScrolledWindow scrolled_window;
     Gtk::Button back_button;
-    std::vector<std::unique_ptr<PoseDetectionWindow>> pose_windows;
-    std::unique_ptr<MyPageWindow> my_page_window;
-    std::unique_ptr<PasswordChangeWindow> password_change_window; // New unique pointer for password change window
-    std::unique_ptr<ProfileEditWindow> profile_edit_window; // New unique pointer for profile edit window
+    // std::vector<std::unique_ptr<PoseDetectionWindow>> pose_windows; // Removed
+    MyPageWindow* my_page_window = nullptr; // Changed to raw pointer, GTK manages lifecycle
+    PasswordChangeWindow* password_change_window = nullptr; // Changed to raw pointer
+    ProfileEditWindow* profile_edit_window = nullptr; // Changed to raw pointer
+    ExerciseHistoryWindow* exercise_history_window = nullptr; // New raw pointer for ExerciseHistoryWindow
+    std::unique_ptr<ExerciseDetailWindow> m_exercise_detail_window; // New unique pointer for ExerciseDetailWindow
 };
 
 #endif // VIRTUALFITNESSCOACHWINDOW_H

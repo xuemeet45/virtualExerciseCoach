@@ -79,6 +79,84 @@ bool DatabaseManager::insert_exercise_pose(int exercise_id, int keypoint_index, 
     return success;
 }
 
+int DatabaseManager::insert_exercise_session_start(int user_id, int exercise_id, const std::string& status) {
+    if (!conn) return -1; // Return -1 to indicate failure
+
+    std::ostringstream oss;
+    oss << "INSERT INTO exercise_history (user_id, exercise_id, status) VALUES ("
+        << user_id << ", " << exercise_id << ", '" << status << "') RETURNING id;";
+    
+    PGresult* res = PQexec(conn, oss.str().c_str());
+    int history_id = -1;
+
+    if (PQresultStatus(res) == PGRES_TUPLES_OK && PQntuples(res) > 0) {
+        history_id = std::stoi(PQgetvalue(res, 0, 0));
+    } else {
+        std::cerr << "Failed to insert exercise session start: " << PQerrorMessage(conn) << std::endl;
+    }
+    PQclear(res);
+    return history_id;
+}
+
+bool DatabaseManager::update_exercise_session_end(int history_id, const std::string& status, int performed_seconds, int calories_burned, int duration_minutes, const std::string& notes) {
+    if (!conn) return false;
+
+    std::ostringstream oss;
+    oss << "UPDATE exercise_history SET "
+        << "status = '" << status << "', "
+        << "performed_seconds = " << performed_seconds << ", "
+        << "calories_burned = " << calories_burned << ", "
+        << "duration_minutes = " << duration_minutes << ", "
+        << "notes = '" << notes << "' "
+        << "WHERE id = " << history_id << ";";
+    
+    PGresult* res = PQexec(conn, oss.str().c_str());
+    bool success = PQresultStatus(res) == PGRES_COMMAND_OK;
+    if (!success) {
+        std::cerr << "Failed to update exercise session end: " << PQerrorMessage(conn) << std::endl;
+    }
+    PQclear(res);
+    return success;
+}
+
+std::vector<std::map<std::string, std::string>> DatabaseManager::fetch_exercise_history(int user_id) {
+    if (!conn) {
+        return {};
+    }
+
+    std::ostringstream oss;
+    oss << "SELECT eh.id, e.name as exercise_name, eh.session_date, eh.duration_minutes, eh.calories_burned, eh.notes, eh.status, eh.performed_seconds "
+        << "FROM exercise_history eh "
+        << "JOIN exercises e ON eh.exercise_id = e.id "
+        << "WHERE eh.user_id = " << user_id << " "
+        << "ORDER BY eh.session_date DESC;";
+    
+    PGresult *res = PQexec(conn, oss.str().c_str());
+
+    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        std::cerr << "Query failed: " << PQerrorMessage(conn) << std::endl;
+        PQclear(res);
+        return {};
+    }
+
+    std::vector<std::map<std::string, std::string>> history_records;
+    int nRows = PQntuples(res);
+    int nCols = PQnfields(res);
+
+    for (int i = 0; i < nRows; i++) {
+        std::map<std::string, std::string> record;
+        for (int j = 0; j < nCols; j++) {
+            std::string field_name = PQfname(res, j);
+            std::string field_value = PQgetvalue(res, i, j);
+            record[field_name] = field_value;
+        }
+        history_records.push_back(record);
+    }
+
+    PQclear(res);
+    return history_records;
+}
+
 bool DatabaseManager::insert_reference_pose(int exercise_id, int keypoint_index, float x, float y, float confidence, int frame_number) {
     if (!conn) return false;
     std::ostringstream oss;

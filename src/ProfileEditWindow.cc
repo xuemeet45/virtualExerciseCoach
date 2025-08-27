@@ -8,7 +8,7 @@ extern DatabaseManager* global_db_manager;
 
 ProfileEditWindow::ProfileEditWindow(Gtk::Window& parent, const User& user)
     : m_label_username("ユーザー名:"),
-      m_entry_username(),
+      m_display_username(), // Initialize the new Gtk::Label
       m_label_email("メールアドレス:"),
       m_entry_email(),
       m_label_first_name("名:"),
@@ -25,21 +25,40 @@ ProfileEditWindow::ProfileEditWindow(Gtk::Window& parent, const User& user)
     set_modal(true);
     set_transient_for(m_parent_window);
 
+    // Apply general window styling
+    add_css_class("window");
+
     m_grid.set_row_spacing(10);
     m_grid.set_column_spacing(10);
     m_grid.set_margin(20);
+    m_grid.set_halign(Gtk::Align::CENTER);
+    m_grid.set_valign(Gtk::Align::CENTER);
 
-    m_entry_username.set_text(m_current_user.get_username());
+    // Set initial values
+    m_display_username.set_text(m_current_user.get_username());
+    m_display_username.add_css_class("mypage-label"); // Apply CSS for consistency
+    m_display_username.set_halign(Gtk::Align::START);
+
     m_entry_email.set_text(m_current_user.get_email());
+    m_entry_email.add_css_class("mypage-label"); // Apply CSS for consistency
     m_entry_first_name.set_text(m_current_user.get_first_name());
+    m_entry_first_name.add_css_class("mypage-label"); // Apply CSS for consistency
     m_entry_last_name.set_text(m_current_user.get_last_name());
+    m_entry_last_name.add_css_class("mypage-label"); // Apply CSS for consistency
 
-    // Username is usually not editable, or requires special handling.
-    // For now, let's make it read-only.
-    m_entry_username.set_editable(false);
+    // Apply CSS to labels
+    m_label_username.add_css_class("mypage-label");
+    m_label_email.add_css_class("mypage-label");
+    m_label_first_name.add_css_class("mypage-label");
+    m_label_last_name.add_css_class("mypage-label");
 
+    // Apply CSS to buttons
+    m_button_save.add_css_class("mypage-button");
+    m_button_cancel.add_css_class("mypage-button");
+
+    // Attach widgets to grid
     m_grid.attach(m_label_username, 0, 0, 1, 1);
-    m_grid.attach(m_entry_username, 1, 0, 1, 1);
+    m_grid.attach(m_display_username, 1, 0, 1, 1); // Attach the new Gtk::Label
     m_grid.attach(m_label_email, 0, 1, 1, 1);
     m_grid.attach(m_entry_email, 1, 1, 1, 1);
     m_grid.attach(m_label_first_name, 0, 2, 1, 1);

@@ -15,6 +15,10 @@ TFLITE_INCLUDE="-Itensorflow-2.18.1/tensorflow/lite"
 TFLITE_BUILD_DIR="tensorflow-2.18.1/tensorflow/lite/build"
 TFLITE_DEPS_DIR="$TFLITE_BUILD_DIR/_deps"
 
+# Clean build directory
+echo "Cleaning build directory..."
+rm -rf build
+
 # Compile the application using CMake
 cmake -B build
 cmake --build build

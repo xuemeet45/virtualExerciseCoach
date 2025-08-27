@@ -11,6 +11,8 @@
 #include <algorithm>
 #include <sstream> // Added for std::ostringstream
 
+extern DatabaseManager* global_db_manager; // Declare global_db_manager
+
 const char* joint_names[17] = {
     "Nose", "Left Eye", "Right Eye", "Left Ear", "Right Ear",
     "Left Shoulder", "Right Shoulder", "Left Elbow", "Right Elbow",
@@ -65,7 +67,7 @@ void draw_pose_skeleton(cv::Mat& frame, float* keypoints) {
     }
 }
 
-PoseDetectionWindow::PoseDetectionWindow(const Exercise& exercise)
+PoseDetectionWindow::PoseDetectionWindow(const Exercise& exercise, int exercise_history_id) // Updated constructor
     : Gtk::Window(),
       main_box(Gtk::Orientation::VERTICAL),
       exercise(exercise),
@@ -73,7 +75,11 @@ PoseDetectionWindow::PoseDetectionWindow(const Exercise& exercise)
       countdown_value(0),
       recording_duration(0),
       is_counting_down(false),
-      is_recording(false) {
+      is_recording(false),
+      m_exercise_history_id(exercise_history_id), // Initialize new member
+      m_session_start_time_ms(0),
+      m_is_pose_correct(false),
+      m_correct_pose_frames_count(0) {
     
     set_title("バーチャルエクササイズコーチ - ポーズ検出");
     set_default_size(800, 600);
@@ -218,6 +224,24 @@ void PoseDetectionWindow::on_hide() {
     Gtk::Window::on_hide();
     std::cout << "Window hidden, stopping camera..." << std::endl;
     stop_camera();
+
+    // Update exercise history when window is hidden
+    if (global_db_manager && m_exercise_history_id != -1) {
+        long long current_time_ms = g_get_monotonic_time() / 1000;
+        int performed_seconds = (m_session_start_time_ms > 0) ? (current_time_ms - m_session_start_time_ms) / 1000 : 0;
+        int duration_minutes = performed_seconds / 60;
+        int calories_burned = 0; // Placeholder, actual calculation might be complex
+
+        std::string final_status = "試行"; // Default status if not performed
+        if (m_is_pose_correct && m_correct_pose_frames_count >= REQUIRED_CORRECT_FRAMES) {
+            final_status = "実行";
+        }
+
+        global_db_manager->update_exercise_session_end(
+            m_exercise_history_id, final_status, performed_seconds, calories_burned, duration_minutes, ""
+        );
+        std::cout << "Updated exercise history ID " << m_exercise_history_id << " with status: " << final_status << ", duration: " << performed_seconds << "s" << std::endl;
+    }
 }
 
 void PoseDetectionWindow::start_camera() {
@@ -242,6 +266,10 @@ void PoseDetectionWindow::start_camera() {
         std::cout << "Starting frame update timer..." << std::endl;
         timeout_connection = Glib::signal_timeout().connect(
             sigc::mem_fun(*this, &PoseDetectionWindow::update_frame), 33); // ~30 FPS
+        
+        // Record session start time
+        m_session_start_time_ms = g_get_monotonic_time() / 1000; // in milliseconds
+        std::cout << "Session started at: " << m_session_start_time_ms << "ms" << std::endl;
     }
 }
 
@@ -268,8 +296,6 @@ bool PoseDetectionWindow::update_frame() {
     // Pose detection if TFLite model is loaded
     if (tflite_interpreter && tflite_model) {
         try {
-            // ... (unchanged TFLite model loading and inference logic) ...
-            
             // Get input tensor
             TfLiteTensor* input_tensor = tflite_interpreter->input_tensor(0);
             if (input_tensor) {
@@ -371,11 +397,32 @@ bool PoseDetectionWindow::update_frame() {
                             if (!error_message_queue.empty()) {
                                 current_error_message = error_message_queue[0];
                                 update_status_label(current_error_message, "red", 20);
+                                m_is_pose_correct = false;
+                                m_correct_pose_frames_count = 0;
                             } else {
                                 update_status_label("Great! All joints match.", "green", 20);
+                                m_is_pose_correct = true;
+                                m_correct_pose_frames_count++;
+
+                                // If pose is consistently correct, update status to 'performed'
+                                if (m_is_pose_correct && m_correct_pose_frames_count == REQUIRED_CORRECT_FRAMES) {
+                                    if (global_db_manager && m_exercise_history_id != -1) {
+                                        long long current_time_ms = g_get_monotonic_time() / 1000;
+                                        int performed_seconds = (m_session_start_time_ms > 0) ? (current_time_ms - m_session_start_time_ms) / 1000 : 0;
+                                        int duration_minutes = performed_seconds / 60;
+                                        int calories_burned = 0; // Placeholder
+
+                                        global_db_manager->update_exercise_session_end(
+                                            m_exercise_history_id, "performed", performed_seconds, calories_burned, duration_minutes, ""
+                                        );
+                                        std::cout << "Exercise ID " << exercise.get_id() << " marked as 'performed' in history ID " << m_exercise_history_id << std::endl;
+                                    }
+                                }
                             }
                         } else if (!has_reference) {
                             update_status_label("No reference pose recorded for this exercise.", "black", 20);
+                            m_is_pose_correct = false;
+                            m_correct_pose_frames_count = 0;
                         }
                         
                         draw_pose_skeleton(frame, output_data);
@@ -385,6 +432,8 @@ bool PoseDetectionWindow::update_frame() {
         } catch (const std::exception& e) {
             std::cerr << "Pose detection error: " << e.what() << std::endl;
             update_status_label("Pose detection error: " + std::string(e.what()), "red", 20);
+            m_is_pose_correct = false;
+            m_correct_pose_frames_count = 0;
         }
     } else {
         update_status_label("TFLite model not loaded, running camera test mode", "black", 20);
@@ -394,6 +443,8 @@ bool PoseDetectionWindow::update_frame() {
         cv::putText(frame, "Camera is working correctly!", 
                    cv::Point(10, 70), cv::FONT_HERSHEY_SIMPLEX, 0.8, 
                    cv::Scalar(255, 255, 255), 2);
+        m_is_pose_correct = false;
+        m_correct_pose_frames_count = 0;
     }
 
     // Add countdown and recording overlay

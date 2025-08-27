@@ -23,7 +23,7 @@ protected:
     // Child widgets
     Gtk::Grid m_grid;
     Gtk::Label m_label_username;
-    Gtk::Entry m_entry_username;
+    Gtk::Label m_display_username; // Changed from Gtk::Entry to Gtk::Label
     Gtk::Label m_label_email;
     Gtk::Entry m_entry_email;
     Gtk::Label m_label_first_name;

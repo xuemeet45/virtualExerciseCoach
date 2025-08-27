@@ -1,6 +1,8 @@
 #include "VirtualFitnessCoachWindow.h"
 #include "ExerciseDetailWindow.h" // Include the header for ExerciseDetailWindow
-#include "PoseDetectionWindow.h" // Include the header for PoseDetectionWindow
+#include "ExerciseHistoryWindow.h" // Include the header for ExerciseHistoryWindow
+#include <iostream> // Required for std::cout and std::endl
+// #include "PoseDetectionWindow.h" // PoseDetectionWindow will be opened by ExerciseDetailWindow
 
 VirtualFitnessCoachWindow::VirtualFitnessCoachWindow()
     : main_box(Gtk::Orientation::HORIZONTAL),
@@ -8,7 +10,12 @@ VirtualFitnessCoachWindow::VirtualFitnessCoachWindow()
       content_stack(), // Use Gtk::Stack to manage different views
       exercise_list_page(),
       exercise_grid(),
-      back_button("戻る") {
+      back_button("戻る"),
+      my_page_window(nullptr), // Initialize raw pointer
+      password_change_window(nullptr), // Initialize raw pointer
+      profile_edit_window(nullptr), // Initialize raw pointer
+      exercise_history_window(nullptr), // Initialize raw pointer
+      m_exercise_detail_window(nullptr) {
     set_title("バーチャルエクササイズコーチ");
     set_default_size(800, 600);
 
@@ -43,7 +50,7 @@ VirtualFitnessCoachWindow::VirtualFitnessCoachWindow()
 
     exercise_list_page.append(*exercise_list_vbox);
 
-    content_stack.add(exercise_list_page, "exercise_list");
+    content_stack.add(exercise_list_page, "exercise_list"); // Add the actual exercise list page
     content_stack.set_visible_child("exercise_list");
 
     // Fetch exercises from the database and add rows
@@ -61,6 +68,7 @@ VirtualFitnessCoachWindow::VirtualFitnessCoachWindow()
     exercise_button->signal_clicked().connect([this]() {
         content_stack.set_visible_child("exercise_list");
     });
+    history_button->signal_clicked().connect(sigc::mem_fun(*this, &VirtualFitnessCoachWindow::on_history_clicked));
     logout_button->signal_clicked().connect(sigc::mem_fun(*this, &VirtualFitnessCoachWindow::on_logout_clicked));
 }
 
@@ -118,83 +126,39 @@ void VirtualFitnessCoachWindow::add_exercise_cards(const std::vector<Exercise>& 
 }
 
 void VirtualFitnessCoachWindow::show_exercise_detail(const Exercise& exercise) {
-    // Create the detail view
-    auto detail_box = Gtk::make_managed<Gtk::Box>(Gtk::Orientation::VERTICAL, 10);
-    detail_box->set_margin(10);
+    // Create and show the ExerciseDetailWindow
+    m_exercise_detail_window = std::make_unique<ExerciseDetailWindow>(exercise);
+    m_exercise_detail_window->set_transient_for(*this);
+    m_exercise_detail_window->set_modal(true);
+    m_exercise_detail_window->show();
 
-    auto title_label = Gtk::make_managed<Gtk::Label>();
-    title_label->set_markup("<big><b>" + exercise.get_name() + "</b></big>");
-    detail_box->append(*title_label);
-
-    auto image = Gtk::make_managed<Gtk::Image>(exercise.get_image_path());
-    image->set_pixel_size(128);
-    detail_box->append(*image);
-    image->set_halign(Gtk::Align::CENTER);
-    image->set_valign(Gtk::Align::CENTER);
-
-    auto category_label = Gtk::make_managed<Gtk::Label>("<b>カテゴリー:</b> " + exercise.get_category());
-    category_label->set_use_markup(true);
-    detail_box->append(*category_label);
-
-    auto primary_muscle_label = Gtk::make_managed<Gtk::Label>("<b>主要筋肉:</b> " + exercise.get_primary_muscle());
-    primary_muscle_label->set_use_markup(true);
-    detail_box->append(*primary_muscle_label);
-
-    auto instructions_label = Gtk::make_managed<Gtk::Label>("<b>やり方:</b>");
-    instructions_label->set_use_markup(true);
-    detail_box->append(*instructions_label);
-    auto instructions_text_view = Gtk::make_managed<Gtk::TextView>();
-    auto instructions_buffer = instructions_text_view->get_buffer();
-    instructions_buffer->set_text(exercise.get_instructions());
-    instructions_text_view->set_editable(false);
-    instructions_text_view->set_cursor_visible(false);
-    auto instructions_scroll = Gtk::make_managed<Gtk::ScrolledWindow>();
-    instructions_scroll->set_child(*instructions_text_view);
-    instructions_scroll->set_policy(Gtk::PolicyType::NEVER, Gtk::PolicyType::AUTOMATIC);
-    detail_box->append(*instructions_scroll);
-    instructions_scroll->set_expand(true);
-    instructions_scroll->set_halign(Gtk::Align::FILL);
-    instructions_scroll->set_valign(Gtk::Align::FILL);
-
-    // Create and add the Try button
-    auto try_button = Gtk::make_managed<Gtk::Button>("試す");
-    try_button->signal_clicked().connect([this, exercise]() {
-        auto pose_window = std::make_unique<PoseDetectionWindow>(exercise);
-        pose_window->set_transient_for(*this);
-        pose_window->set_modal(true);
-        pose_window->show();
-        pose_windows.push_back(std::move(pose_window));  // Store the window
-    });
-    detail_box->append(*try_button);
-
-    back_button.signal_clicked().connect([this]() {
-        // Switch back to the exercise list view
-        if (auto visible_child = content_stack.get_visible_child()) {
-            if (visible_child != &exercise_list_page) {
-                content_stack.remove(*visible_child); // Remove only the detail view
-            }
+    // Connect a signal to handle when ExerciseDetailWindow is closed
+    m_exercise_detail_window->signal_hide().connect([this]() {
+        if (m_exercise_detail_window) {
+            m_exercise_detail_window->hide();
+            // Optionally, reset the unique_ptr if the window should be recreated each time
+            // m_exercise_detail_window.reset(); 
         }
-        content_stack.set_visible_child("exercise_list");
+        // Ensure the main window is focused or visible after the modal closes
+        present(); 
     });
-    back_button.set_margin_top(10);
-    back_button.set_halign(Gtk::Align::END);
-    back_button.set_valign(Gtk::Align::END);
-    detail_box->append(back_button);
-
-    // Add the detail view to the stack
-    content_stack.add(*detail_box, "exercise_detail_" + std::to_string(exercise.get_id()));
-    content_stack.set_visible_child("exercise_detail_" + std::to_string(exercise.get_id()));
 }
 
 void VirtualFitnessCoachWindow::on_my_page_clicked() {
     if (!my_page_window) {
-        my_page_window = std::make_unique<MyPageWindow>(*this); // Pass *this as parent
+        my_page_window = Gtk::make_managed<MyPageWindow>(*this); // Create and manage with GTK
         // Connect the signal from MyPageWindow to show the password change window
         my_page_window->signal_change_password_request().connect(
             sigc::mem_fun(*this, &VirtualFitnessCoachWindow::show_password_change_window));
         // Connect the signal from MyPageWindow to show the profile edit window
         my_page_window->signal_edit_profile_request().connect(
             sigc::mem_fun(*this, &VirtualFitnessCoachWindow::show_profile_edit_window));
+        
+        // Connect to the hide signal to nullify the pointer when the window is closed
+        my_page_window->signal_hide().connect([this]() {
+            std::cout << "MyPageWindow hidden, nullifying pointer." << std::endl;
+            my_page_window = nullptr;
+        });
     }
     
     if (AuthManager::getInstance().isLoggedIn()) {
@@ -206,7 +170,7 @@ void VirtualFitnessCoachWindow::on_my_page_clicked() {
 
 void VirtualFitnessCoachWindow::show_profile_edit_window(const User& user) {
     if (!profile_edit_window) {
-        profile_edit_window = std::make_unique<ProfileEditWindow>(*this, user); // Pass *this as parent and current user
+        profile_edit_window = Gtk::make_managed<ProfileEditWindow>(*this, user); // Create and manage with GTK
         profile_edit_window->set_modal(true);
 
         // Connect signals from ProfileEditWindow
@@ -215,24 +179,15 @@ void VirtualFitnessCoachWindow::show_profile_edit_window(const User& user) {
 
         profile_edit_window->signal_back_to_mypage().connect([this]() {
             // User cancelled, hide profile edit window and show MyPage
-            profile_edit_window->hide();
-            if (my_page_window) {
-                my_page_window->present(); // Show MyPage again
-            }
+            if (profile_edit_window) profile_edit_window->hide();
+            if (my_page_window) my_page_window->present(); // Show MyPage again
         });
     } else {
         // If window already exists, update its user info and show
-        profile_edit_window = std::make_unique<ProfileEditWindow>(*this, user); // Recreate with updated user
-        profile_edit_window->signal_profile_update_success().connect(
-            sigc::mem_fun(*this, &VirtualFitnessCoachWindow::on_profile_update_success));
-        profile_edit_window->signal_back_to_mypage().connect([this]() {
-            profile_edit_window->hide();
-            if (my_page_window) {
-                my_page_window->present();
-            }
-        });
+        // profile_edit_window->updateUserInfo(user); // Update user info if window already exists
+        // (Removed because ProfileEditWindow has no updateUserInfo method)
     }
-    profile_edit_window->present();
+    if (profile_edit_window) profile_edit_window->present();
 }
 
 void VirtualFitnessCoachWindow::on_profile_update_success(const User& updated_user) {
@@ -248,13 +203,13 @@ void VirtualFitnessCoachWindow::on_profile_update_success(const User& updated_us
 
 void VirtualFitnessCoachWindow::show_password_change_window() {
     if (!password_change_window) {
-        password_change_window = std::make_unique<PasswordChangeWindow>(*this); // Pass *this as parent
+        password_change_window = Gtk::make_managed<PasswordChangeWindow>(*this); // Create and manage with GTK
         password_change_window->set_modal(true);
 
         // Connect signals from PasswordChangeWindow
         password_change_window->signal_password_change_success().connect([this]() {
             // Password changed, hide password change window and refresh MyPage
-            password_change_window->hide();
+            if (password_change_window) password_change_window->hide();
             if (my_page_window) {
                 my_page_window->updateUserInfo(AuthManager::getInstance().getCurrentUser());
                 my_page_window->present(); // Show MyPage again
@@ -263,13 +218,24 @@ void VirtualFitnessCoachWindow::show_password_change_window() {
 
         password_change_window->signal_back_to_mypage().connect([this]() {
             // User cancelled, hide password change window and show MyPage
-            password_change_window->hide();
+            if (password_change_window) password_change_window->hide();
             if (my_page_window) {
                 my_page_window->present(); // Show MyPage again
             }
         });
     }
-    password_change_window->present();
+    if (password_change_window) password_change_window->present();
+}
+
+void VirtualFitnessCoachWindow::on_history_clicked() {
+    if (!exercise_history_window) {
+        exercise_history_window = Gtk::make_managed<ExerciseHistoryWindow>(*this);
+        exercise_history_window->set_modal(true);
+        exercise_history_window->signal_hide().connect([this]() {
+            exercise_history_window = nullptr;
+        });
+    }
+    exercise_history_window->present();
 }
 
 void VirtualFitnessCoachWindow::on_logout_clicked() {

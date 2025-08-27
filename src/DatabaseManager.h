@@ -24,7 +24,12 @@ public:
     bool execute_query(const std::string& query);
     std::vector<std::map<std::string, std::string>> fetch_sessions(const std::string& query);
     std::vector<std::map<std::string, std::string>> fetch_statistics(const std::string& query);
-    bool update_user_profile(const User& user); // New method for updating user profile
+    bool update_user_profile(const User& user);
+
+    // New methods for exercise history
+    int insert_exercise_session_start(int user_id, int exercise_id, const std::string& status = "tried");
+    bool update_exercise_session_end(int history_id, const std::string& status, int performed_seconds, int calories_burned, int duration_minutes, const std::string& notes = "");
+    std::vector<std::map<std::string, std::string>> fetch_exercise_history(int user_id);
 
 private:
     PGconn *conn;

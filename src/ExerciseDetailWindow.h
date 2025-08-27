@@ -36,6 +36,7 @@ private:
     Gtk::Label updated_at_label;
     Gtk::Button try_button;
     Exercise exercise;
+    int m_exercise_history_id; // To store the ID of the current exercise session in history
 };
 
 #endif // EXERCISEDETAILWINDOW_H

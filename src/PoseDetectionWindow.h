@@ -11,7 +11,7 @@
 
 class PoseDetectionWindow : public Gtk::Window {
 public:
-    PoseDetectionWindow(const Exercise& exercise);
+    PoseDetectionWindow(const Exercise& exercise, int exercise_history_id); // Modified constructor
     ~PoseDetectionWindow() override;
 
 protected:
@@ -62,6 +62,12 @@ private:
     bool is_counting_down;
     bool is_recording;
     std::vector<std::vector<float>> recorded_poses; // Store recorded poses during recording period
+
+    int m_exercise_history_id; // Store the ID of the current exercise session
+    long long m_session_start_time_ms; // To record the start time of the pose detection session
+    bool m_is_pose_correct; // To track if the current pose is correct
+    int m_correct_pose_frames_count; // To count consecutive correct frames
+    const int REQUIRED_CORRECT_FRAMES = 30; // Number of consecutive frames for a pose to be "performed"
 };
 
 #endif // POSE_DETECTION_WINDOW_H

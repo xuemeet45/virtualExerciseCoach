@@ -201,6 +201,30 @@ src/ExerciseDetailWindow.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/ExerciseDetailWindow.cc.s
 .PHONY : src/ExerciseDetailWindow.cc.s
 
+src/ExerciseHistoryWindow.o: src/ExerciseHistoryWindow.cc.o
+.PHONY : src/ExerciseHistoryWindow.o
+
+# target to build an object file
+src/ExerciseHistoryWindow.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/ExerciseHistoryWindow.cc.o
+.PHONY : src/ExerciseHistoryWindow.cc.o
+
+src/ExerciseHistoryWindow.i: src/ExerciseHistoryWindow.cc.i
+.PHONY : src/ExerciseHistoryWindow.i
+
+# target to preprocess a source file
+src/ExerciseHistoryWindow.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/ExerciseHistoryWindow.cc.i
+.PHONY : src/ExerciseHistoryWindow.cc.i
+
+src/ExerciseHistoryWindow.s: src/ExerciseHistoryWindow.cc.s
+.PHONY : src/ExerciseHistoryWindow.s
+
+# target to generate assembly for a file
+src/ExerciseHistoryWindow.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/src/ExerciseHistoryWindow.cc.s
+.PHONY : src/ExerciseHistoryWindow.cc.s
+
 src/LoginWindow.o: src/LoginWindow.cc.o
 .PHONY : src/LoginWindow.o
 
@@ -435,6 +459,9 @@ help:
 	@echo "... src/ExerciseDetailWindow.o"
 	@echo "... src/ExerciseDetailWindow.i"
 	@echo "... src/ExerciseDetailWindow.s"
+	@echo "... src/ExerciseHistoryWindow.o"
+	@echo "... src/ExerciseHistoryWindow.i"
+	@echo "... src/ExerciseHistoryWindow.s"
 	@echo "... src/LoginWindow.o"
 	@echo "... src/LoginWindow.i"
 	@echo "... src/LoginWindow.s"

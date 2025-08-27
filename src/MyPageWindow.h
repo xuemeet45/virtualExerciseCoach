@@ -5,6 +5,7 @@
 #include "User.h"
 #include "PasswordChangeWindow.h" // Include the new password change window header
 #include "ProfileEditWindow.h"    // Include the new profile edit window header
+#include "ExerciseHistoryWindow.h" // Include the new history window header
 
 class MyPageWindow : public Gtk::Window {
 public:
@@ -60,6 +61,8 @@ private:
     
     // Current user
     User current_user;
+
+    std::unique_ptr<ExerciseHistoryWindow> m_history_window; // Manage history window
 };
 
 #endif // MYPAGEWINDOW_H

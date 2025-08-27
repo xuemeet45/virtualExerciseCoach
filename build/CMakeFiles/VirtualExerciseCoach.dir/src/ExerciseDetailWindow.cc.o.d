@@ -2388,4 +2388,5 @@ CMakeFiles/VirtualExerciseCoach.dir/src/ExerciseDetailWindow.cc.o: \
   /usr/local/include/tensorflow/lite/profiling/telemetry/c/profiler.h \
   /usr/local/include/tensorflow/lite/profiling/telemetry/c/telemetry_setting.h \
   /usr/local/include/tensorflow/lite/profiling/telemetry/telemetry_status.h \
-  /usr/local/include/tensorflow/lite/model_builder.h
+  /usr/local/include/tensorflow/lite/model_builder.h \
+  /Users/monsoon/Documents/gtkmm-sample/src/AuthManager.h

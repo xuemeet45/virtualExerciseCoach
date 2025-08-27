@@ -1,9 +1,13 @@
 #include <gtkmm/application.h>
+#include <gtkmm/cssprovider.h> // Added for CSS
+#include <gtkmm/stylecontext.h> // Added for CSS
+#include <gdkmm/display.h> // Added for CSS (Corrected include)
 #include "VirtualFitnessCoachWindow.h"
 #include "DatabaseManager.h"
 #include "LoginWindow.h"
 #include "RegisterWindow.h"
 #include "AuthManager.h"
+#include <iostream> // Added for std::cerr and std::endl
 
 extern AuthManager* global_auth_manager; // Declare global_auth_manager
 
@@ -23,6 +27,23 @@ protected:
         
         window->present();
         return window;
+    }
+
+    void on_startup() override {
+        Gtk::Application::on_startup(); // Call base class method
+
+        // Load CSS
+        auto css_provider = Gtk::CssProvider::create();
+        try {
+            css_provider->load_from_path("src/style.css");
+            Gtk::StyleContext::add_provider_for_display(
+                Gdk::Display::get_default(),
+                css_provider,
+                GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
+            );
+        } catch (const Glib::Error& ex) {
+            std::cerr << "Error loading CSS file: " << ex.what() << std::endl;
+        }
     }
 
     void on_activate() override {

@@ -5,6 +5,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/VirtualExerciseCoach.dir/src/DatabaseManager.cc.o.d"
   "CMakeFiles/VirtualExerciseCoach.dir/src/ExerciseDetailWindow.cc.o"
   "CMakeFiles/VirtualExerciseCoach.dir/src/ExerciseDetailWindow.cc.o.d"
+  "CMakeFiles/VirtualExerciseCoach.dir/src/ExerciseHistoryWindow.cc.o"
+  "CMakeFiles/VirtualExerciseCoach.dir/src/ExerciseHistoryWindow.cc.o.d"
   "CMakeFiles/VirtualExerciseCoach.dir/src/LoginWindow.cc.o"
   "CMakeFiles/VirtualExerciseCoach.dir/src/LoginWindow.cc.o.d"
   "CMakeFiles/VirtualExerciseCoach.dir/src/MyPageWindow.cc.o"

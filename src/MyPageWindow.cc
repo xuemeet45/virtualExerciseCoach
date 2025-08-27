@@ -1,135 +1,145 @@
 #include "MyPageWindow.h"
 #include "AuthManager.h"
 #include "DatabaseManager.h"
+#include "ExerciseHistoryWindow.h" // Include the new history window header
 #include <iostream>
 
 MyPageWindow::MyPageWindow(Gtk::Window& parent) // Accept parent parameter
     : main_box(Gtk::Orientation::VERTICAL),
       profile_box(Gtk::Orientation::VERTICAL),
       stats_box(Gtk::Orientation::VERTICAL),
-      actions_box(Gtk::Orientation::VERTICAL) {
+      actions_box(Gtk::Orientation::VERTICAL),
+      m_history_window(nullptr) { // Initialize new member
     
     set_title("バーチャルエクササイズコーチ - マイページ");
-    set_default_size(600, 500);
+    set_default_size(600, 700); // Slightly taller for better spacing
     set_modal(true);
     set_deletable(true);
     set_resizable(true);
     set_transient_for(parent); // Set MyPageWindow as transient for the main window
     
+    // Apply general window styling
+    add_css_class("window");
+
+    // Main layout box
+    main_box.set_margin(20);
+    main_box.set_spacing(20);
+    main_box.set_halign(Gtk::Align::CENTER);
+    main_box.set_valign(Gtk::Align::CENTER);
+
     // Profile section
-    profile_title.set_markup("<big><b>プロフィール</b></big>");
+    Gtk::Box profile_frame_box(Gtk::Orientation::VERTICAL);
+    profile_frame_box.add_css_class("mypage-box-frame");
+    profile_frame_box.set_spacing(5);
+
+    profile_title.set_text("プロフィール");
+    profile_title.add_css_class("mypage-section-title");
     profile_title.set_halign(Gtk::Align::CENTER);
-    profile_title.set_margin_bottom(10);
+    profile_frame_box.append(profile_title);
+
+    Gtk::Grid profile_grid;
+    profile_grid.set_row_spacing(5);
+    profile_grid.set_column_spacing(10);
+    profile_grid.set_margin(10);
+    profile_grid.set_halign(Gtk::Align::CENTER);
+
+    auto add_profile_row = [&](const Glib::ustring& label_text, Gtk::Label& value_label, int row) {
+        auto label = Gtk::make_managed<Gtk::Label>(label_text);
+        label->set_halign(Gtk::Align::START);
+        label->add_css_class("mypage-label");
+        value_label.set_halign(Gtk::Align::START);
+        value_label.add_css_class("mypage-label");
+        profile_grid.attach(*label, 0, row, 1, 1);
+        profile_grid.attach(value_label, 1, row, 1, 1);
+    };
+
+    add_profile_row("ユーザー名:", username_label, 0);
+    add_profile_row("メールアドレス:", email_label, 1);
+    add_profile_row("名前:", name_label, 2);
+    add_profile_row("登録日:", join_date_label, 3);
+    add_profile_row("最終ログイン:", last_login_label, 4);
     
-    username_label.set_text("ユーザー名: ");
-    username_label.set_halign(Gtk::Align::START);
-    username_label.set_margin_start(20);
-    username_label.set_margin_end(20);
-    
-    email_label.set_text("メールアドレス: ");
-    email_label.set_halign(Gtk::Align::START);
-    email_label.set_margin_start(20);
-    email_label.set_margin_end(20);
-    
-    name_label.set_text("名前: ");
-    name_label.set_halign(Gtk::Align::START);
-    name_label.set_margin_start(20);
-    name_label.set_margin_end(20);
-    
-    join_date_label.set_text("登録日: ");
-    join_date_label.set_halign(Gtk::Align::START);
-    join_date_label.set_margin_start(20);
-    join_date_label.set_margin_end(20);
-    
-    last_login_label.set_text("最終ログイン: ");
-    last_login_label.set_halign(Gtk::Align::START);
-    last_login_label.set_margin_start(20);
-    last_login_label.set_margin_end(20);
-    last_login_label.set_margin_bottom(20);
-    
+    profile_frame_box.append(profile_grid);
+    main_box.append(profile_frame_box);
+
     // Statistics section
-    stats_title.set_markup("<big><b>統計</b></big>");
+    Gtk::Box stats_frame_box(Gtk::Orientation::VERTICAL);
+    stats_frame_box.add_css_class("mypage-box-frame");
+    stats_frame_box.set_spacing(5);
+
+    stats_title.set_text("統計");
+    stats_title.add_css_class("mypage-section-title");
     stats_title.set_halign(Gtk::Align::CENTER);
-    stats_title.set_margin_bottom(10);
-    
-    total_sessions_label.set_text("総セッション数: 0");
-    total_sessions_label.set_halign(Gtk::Align::START);
-    total_sessions_label.set_margin_start(20);
-    total_sessions_label.set_margin_end(20);
-    
-    total_duration_label.set_text("総運動時間: 0分");
-    total_duration_label.set_halign(Gtk::Align::START);
-    total_duration_label.set_margin_start(20);
-    total_duration_label.set_margin_end(20);
-    
-    total_calories_label.set_text("総消費カロリー: 0kcal");
-    total_calories_label.set_halign(Gtk::Align::START);
-    total_calories_label.set_margin_start(20);
-    total_calories_label.set_margin_end(20);
-    
-    favorite_exercise_label.set_text("お気に入りエクササイズ: なし");
-    favorite_exercise_label.set_halign(Gtk::Align::START);
-    favorite_exercise_label.set_margin_start(20);
-    favorite_exercise_label.set_margin_end(20);
-    favorite_exercise_label.set_margin_bottom(20);
+    stats_frame_box.append(stats_title);
+
+    Gtk::Grid stats_grid;
+    stats_grid.set_row_spacing(5);
+    stats_grid.set_column_spacing(10);
+    stats_grid.set_margin(10);
+    stats_grid.set_halign(Gtk::Align::CENTER);
+
+    auto add_stats_row = [&](const Glib::ustring& label_text, Gtk::Label& value_label, int row) {
+        auto label = Gtk::make_managed<Gtk::Label>(label_text);
+        label->set_halign(Gtk::Align::START);
+        label->add_css_class("mypage-label");
+        value_label.set_halign(Gtk::Align::START);
+        value_label.add_css_class("mypage-label");
+        stats_grid.attach(*label, 0, row, 1, 1);
+        stats_grid.attach(value_label, 1, row, 1, 1);
+    };
+
+    total_sessions_label.set_text("0"); // Only value
+    total_duration_label.set_text("0分");
+    total_calories_label.set_text("0kcal");
+    favorite_exercise_label.set_text("なし");
+
+    add_stats_row("総セッション数:", total_sessions_label, 0);
+    add_stats_row("総運動時間:", total_duration_label, 1);
+    add_stats_row("総消費カロリー:", total_calories_label, 2);
+    add_stats_row("お気に入りエクササイズ:", favorite_exercise_label, 3);
+
+    stats_frame_box.append(stats_grid);
+    main_box.append(stats_frame_box);
     
     // Action buttons
+    Gtk::Box actions_frame_box(Gtk::Orientation::VERTICAL);
+    actions_frame_box.add_css_class("mypage-box-frame");
+    actions_frame_box.set_spacing(10);
+    actions_frame_box.set_halign(Gtk::Align::CENTER);
+
     edit_profile_button.set_label("ユーザー情報編集");
-    edit_profile_button.set_margin_start(20);
-    edit_profile_button.set_margin_end(20);
-    edit_profile_button.set_margin_bottom(5);
-    
+    edit_profile_button.add_css_class("mypage-button");
+    edit_profile_button.set_halign(Gtk::Align::CENTER);
+    edit_profile_button.set_size_request(200, -1); // Fixed width for buttons
+
     change_password_button.set_label("パスワード変更");
-    change_password_button.set_margin_start(20);
-    change_password_button.set_margin_end(20);
-    change_password_button.set_margin_bottom(5);
-    
+    change_password_button.add_css_class("mypage-button");
+    change_password_button.set_halign(Gtk::Align::CENTER);
+    change_password_button.set_size_request(200, -1);
+
     view_history_button.set_label("運動履歴");
-    view_history_button.set_margin_start(20);
-    view_history_button.set_margin_end(20);
-    view_history_button.set_margin_bottom(5);
-    
+    view_history_button.add_css_class("mypage-button");
+    view_history_button.set_halign(Gtk::Align::CENTER);
+    view_history_button.set_size_request(200, -1);
+
     back_button.set_label("戻る");
-    back_button.set_margin_start(20);
-    back_button.set_margin_end(20);
-    back_button.set_margin_bottom(5);
-    
+    back_button.add_css_class("mypage-button");
+    back_button.set_halign(Gtk::Align::CENTER);
+    back_button.set_size_request(200, -1);
+
     logout_button.set_label("ログアウト");
-    logout_button.set_margin_start(20);
-    logout_button.set_margin_end(20);
-    logout_button.set_margin_bottom(20);
+    logout_button.add_css_class("mypage-button");
+    logout_button.add_css_class("destructive"); // Apply destructive style
+    logout_button.set_halign(Gtk::Align::CENTER);
+    logout_button.set_size_request(200, -1);
     
-    // Layout
-    profile_box.set_margin(10);
-    profile_box.set_spacing(5);
-    profile_box.append(profile_title);
-    profile_box.append(username_label);
-    profile_box.append(email_label);
-    profile_box.append(name_label);
-    profile_box.append(join_date_label);
-    profile_box.append(last_login_label);
+    actions_frame_box.append(edit_profile_button);
+    actions_frame_box.append(change_password_button);
+    actions_frame_box.append(view_history_button);
+    actions_frame_box.append(back_button);
+    actions_frame_box.append(logout_button);
     
-    stats_box.set_margin(10);
-    stats_box.set_spacing(5);
-    stats_box.append(stats_title);
-    stats_box.append(total_sessions_label);
-    stats_box.append(total_duration_label);
-    stats_box.append(total_calories_label);
-    stats_box.append(favorite_exercise_label);
-    
-    actions_box.set_margin(10);
-    actions_box.set_spacing(5);
-    actions_box.append(edit_profile_button);
-    actions_box.append(change_password_button);
-    actions_box.append(view_history_button);
-    actions_box.append(back_button);
-    actions_box.append(logout_button);
-    
-    main_box.set_margin(10);
-    main_box.set_spacing(10);
-    main_box.append(profile_box);
-    main_box.append(stats_box);
-    main_box.append(actions_box);
+    main_box.append(actions_frame_box);
     
     set_child(main_box);
     
@@ -146,11 +156,11 @@ MyPageWindow::MyPageWindow(Gtk::Window& parent) // Accept parent parameter
 void MyPageWindow::updateUserInfo(const User& user) {
     current_user = user;
     
-    username_label.set_text("ユーザー名: " + user.get_username());
-    email_label.set_text("メールアドレス: " + user.get_email());
-    name_label.set_text("名前: " + user.get_last_name() + " " + user.get_first_name());
-    join_date_label.set_text("登録日: " + user.get_created_at());
-    last_login_label.set_text("最終ログイン: " + user.get_last_login());
+    username_label.set_text(user.get_username());
+    email_label.set_text(user.get_email());
+    name_label.set_text(user.get_last_name() + " " + user.get_first_name());
+    join_date_label.set_text(user.get_created_at());
+    last_login_label.set_text(user.get_last_login());
     
     refreshStatistics();
 }
@@ -170,9 +180,22 @@ void MyPageWindow::refreshStatistics() {
     auto stats = global_db_manager->fetch_statistics(oss.str());
     if (!stats.empty()) {
         const auto& stat = stats[0];
-        total_sessions_label.set_text("総セッション数: " + stat.at("total_sessions"));
-        total_duration_label.set_text("総運動時間: " + stat.at("total_duration") + "分");
-        total_calories_label.set_text("総消費カロリー: " + stat.at("total_calories") + "kcal");
+        
+        // Helper to safely get integer from map
+        auto get_int_or_default = [](const std::map<std::string, std::string>& m, const std::string& key, int default_val = 0) {
+            if (m.count(key) && !m.at(key).empty()) {
+                try {
+                    return std::stoi(m.at(key));
+                } catch (const std::exception& e) {
+                    std::cerr << "Error converting '" << m.at(key) << "' to int for key '" << key << "': " << e.what() << std::endl;
+                }
+            }
+            return default_val;
+        };
+
+        total_sessions_label.set_text(std::to_string(get_int_or_default(stat, "total_sessions")));
+        total_duration_label.set_text(std::to_string(get_int_or_default(stat, "total_duration")) + "分");
+        total_calories_label.set_text(std::to_string(get_int_or_default(stat, "total_calories")) + "kcal");
     }
     
     // Get favorite exercise
@@ -187,9 +210,9 @@ void MyPageWindow::refreshStatistics() {
     
     auto favorites = global_db_manager->fetch_statistics(fav_oss.str());
     if (!favorites.empty()) {
-        favorite_exercise_label.set_text("お気に入りエクササイズ: " + favorites[0].at("name"));
+        favorite_exercise_label.set_text(favorites[0].at("name"));
     } else {
-        favorite_exercise_label.set_text("お気に入りエクササイズ: なし");
+        favorite_exercise_label.set_text("なし");
     }
 }
 
@@ -202,8 +225,23 @@ void MyPageWindow::on_change_password_clicked() {
 }
 
 void MyPageWindow::on_view_history_clicked() {
-    // TODO: Implement history view
-    std::cout << "View history clicked" << std::endl;
+    if (!m_history_window) {
+        m_history_window = std::make_unique<ExerciseHistoryWindow>(*this);
+        m_history_window->set_transient_for(*this);
+        m_history_window->set_modal(true); // Make it modal to ensure focus
+        
+        // Connect to the hide signal to reset the unique_ptr when the window is closed
+        m_history_window->signal_hide().connect([this]() {
+            if (m_history_window) {
+                m_history_window->hide();
+                // Resetting the unique_ptr ensures the window is destroyed and recreated fresh next time
+                m_history_window.reset(); 
+            }
+            // Ensure MyPageWindow is focused after the modal closes
+            // present(); // Removed: MyPageWindow should already be visible
+        });
+    }
+    m_history_window->present(); // Show the window
 }
 
 void MyPageWindow::on_back_clicked() {

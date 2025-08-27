@@ -85,12 +85,12 @@ clean: CMakeFiles/VirtualExerciseCoach.dir/clean
 CMakeFiles/VirtualExerciseCoach.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/monsoon/Documents/gtkmm-sample/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10,11,12,13 "Built target VirtualExerciseCoach"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/monsoon/Documents/gtkmm-sample/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10,11,12,13,14 "Built target VirtualExerciseCoach"
 .PHONY : CMakeFiles/VirtualExerciseCoach.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/VirtualExerciseCoach.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/monsoon/Documents/gtkmm-sample/build/CMakeFiles 13
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/monsoon/Documents/gtkmm-sample/build/CMakeFiles 14
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/VirtualExerciseCoach.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /Users/monsoon/Documents/gtkmm-sample/build/CMakeFiles 0
 .PHONY : CMakeFiles/VirtualExerciseCoach.dir/rule
@@ -102,7 +102,7 @@ VirtualExerciseCoach: CMakeFiles/VirtualExerciseCoach.dir/rule
 # codegen rule for target.
 CMakeFiles/VirtualExerciseCoach.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/VirtualExerciseCoach.dir/build.make CMakeFiles/VirtualExerciseCoach.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/monsoon/Documents/gtkmm-sample/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10,11,12,13 "Finished codegen for target VirtualExerciseCoach"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/monsoon/Documents/gtkmm-sample/build/CMakeFiles --progress-num=1,2,3,4,5,6,7,8,9,10,11,12,13,14 "Finished codegen for target VirtualExerciseCoach"
 .PHONY : CMakeFiles/VirtualExerciseCoach.dir/codegen
 
 # clean rule for target.

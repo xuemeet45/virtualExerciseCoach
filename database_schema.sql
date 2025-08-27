@@ -36,6 +36,28 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Exercises table
+CREATE TABLE IF NOT EXISTS exercises (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    image_path VARCHAR(255),
+    category VARCHAR(100),
+    primary_muscle VARCHAR(100),
+    secondary_muscles TEXT,
+    equipment TEXT,
+    difficulty_level VARCHAR(50),
+    instructions TEXT,
+    tips TEXT,
+    video_url VARCHAR(255),
+    reps_sets_suggestion VARCHAR(255),
+    benefits TEXT,
+    common_mistakes TEXT,
+    variations TEXT,
+    calories_burned_estimate VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Exercise history table to track user's exercise sessions
 CREATE TABLE IF NOT EXISTS exercise_history (
     id SERIAL PRIMARY KEY,
@@ -44,7 +66,9 @@ CREATE TABLE IF NOT EXISTS exercise_history (
     session_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     duration_minutes INTEGER,
     calories_burned INTEGER,
-    notes TEXT
+    notes TEXT,
+    status VARCHAR(50) DEFAULT '確認', -- New column for exercise status (e.g., '確認', '試行', '実行')
+    performed_seconds INTEGER -- New column for actual performed time in seconds
 );
 
 -- Create indexes for better performance
@@ -59,4 +83,4 @@ CREATE INDEX IF NOT EXISTS idx_exercise_history_exercise_id ON exercise_history(
 -- SHA-256 hash of "admin123" is: 240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9
 INSERT INTO users (username, email, password_hash, first_name, last_name, is_active) 
 VALUES ('admin', 'admin@example.com', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 'Admin', 'User', true)
-ON CONFLICT (username) DO NOTHING; 
+ON CONFLICT (username) DO NOTHING;

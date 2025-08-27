@@ -47,7 +47,7 @@ link_directories(
     tensorflow-2.18.1/tensorflow/lite/build/_deps/fft2d-build
 )
 
-file(GLOB SRC_FILES src/*.cc src/PasswordChangeWindow.cc src/ProfileEditWindow.cc)
+file(GLOB SRC_FILES src/*.cc)
 
 add_executable(VirtualExerciseCoach ${SRC_FILES})
 
