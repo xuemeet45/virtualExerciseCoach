@@ -9,7 +9,7 @@
 
 class MyPageWindow : public Gtk::Window {
 public:
-    explicit MyPageWindow(Gtk::Window& parent); // Add parent parameter
+    explicit MyPageWindow(Gtk::Window& parent, const User& user); // Add parent and user parameters
     
     void updateUserInfo(const User& user);
     void refreshStatistics();
@@ -38,29 +38,29 @@ private:
     Gtk::Box actions_box;
     
     // Profile section
-    Gtk::Label profile_title;
-    Gtk::Label username_label;
-    Gtk::Label email_label;
-    Gtk::Label name_label;
-    Gtk::Label join_date_label;
-    Gtk::Label last_login_label;
+    Gtk::Label* profile_title;
+    Gtk::Label* username_label;
+    Gtk::Label* email_label;
+    Gtk::Label* name_label;
+    Gtk::Label* join_date_label;
+    Gtk::Label* last_login_label;
     
     // Statistics section
-    Gtk::Label stats_title;
-    Gtk::Label total_sessions_label;
-    Gtk::Label total_duration_label;
-    Gtk::Label total_calories_label;
-    Gtk::Label favorite_exercise_label;
+    Gtk::Label* stats_title;
+    Gtk::Label* total_sessions_label;
+    Gtk::Label* total_duration_label;
+    Gtk::Label* total_calories_label;
+    Gtk::Label* favorite_exercise_label;
     
     // Action buttons
-    Gtk::Button edit_profile_button;
-    Gtk::Button change_password_button;
-    Gtk::Button view_history_button;
-    Gtk::Button back_button;
-    Gtk::Button logout_button;
+    Gtk::Button* edit_profile_button;
+    Gtk::Button* change_password_button;
+    Gtk::Button* view_history_button;
+    Gtk::Button* back_button;
+    Gtk::Button* logout_button;
     
-    // Current user
-    User current_user;
+    // Current user (now a reference, initialized in constructor)
+    const User& m_user;
 
     std::unique_ptr<ExerciseHistoryWindow> m_history_window; // Manage history window
 };

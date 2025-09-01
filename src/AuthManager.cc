@@ -107,7 +107,10 @@ bool AuthManager::change_password(int user_id, const std::string& old_password, 
 }
 
 int AuthManager::get_current_user_id() const {
-    return current_user.get_id();
+    if (isLoggedIn()) {
+        return current_user.get_id();
+    }
+    return 0; // Return 0 or throw an exception if no user is logged in
 }
 
 Glib::ustring AuthManager::generateJWTToken(const User& user) {

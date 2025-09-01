@@ -28,7 +28,7 @@ public:
     bool isSessionValid(const Glib::ustring& token);
     
     // Current user
-    User getCurrentUser() const { return current_user; }
+    const User& getCurrentUser() const { return current_user; } // Return const reference
     bool isLoggedIn() const { return !current_token.empty(); }
     Glib::ustring getCurrentToken() const { return current_token; }
     int get_current_user_id() const;

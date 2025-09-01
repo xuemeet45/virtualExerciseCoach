@@ -11,10 +11,10 @@ VirtualFitnessCoachWindow::VirtualFitnessCoachWindow()
       exercise_list_page(),
       exercise_grid(),
       back_button("戻る"),
-      my_page_window(nullptr), // Initialize raw pointer
-      password_change_window(nullptr), // Initialize raw pointer
-      profile_edit_window(nullptr), // Initialize raw pointer
-      exercise_history_window(nullptr), // Initialize raw pointer
+      my_page_window(nullptr), // Initialize unique_ptr
+      password_change_window(nullptr), // Initialize unique_ptr
+      profile_edit_window(nullptr), // Initialize unique_ptr
+      exercise_history_window(nullptr), // Initialize unique_ptr
       m_exercise_detail_window(nullptr) {
     set_title("バーチャルエクササイズコーチ");
     set_default_size(800, 600);
@@ -145,32 +145,36 @@ void VirtualFitnessCoachWindow::show_exercise_detail(const Exercise& exercise) {
 }
 
 void VirtualFitnessCoachWindow::on_my_page_clicked() {
-    if (!my_page_window) {
-        my_page_window = Gtk::make_managed<MyPageWindow>(*this); // Create and manage with GTK
-        // Connect the signal from MyPageWindow to show the password change window
-        my_page_window->signal_change_password_request().connect(
-            sigc::mem_fun(*this, &VirtualFitnessCoachWindow::show_password_change_window));
-        // Connect the signal from MyPageWindow to show the profile edit window
-        my_page_window->signal_edit_profile_request().connect(
-            sigc::mem_fun(*this, &VirtualFitnessCoachWindow::show_profile_edit_window));
-        
-        // Connect to the hide signal to nullify the pointer when the window is closed
-        my_page_window->signal_hide().connect([this]() {
-            std::cout << "MyPageWindow hidden, nullifying pointer." << std::endl;
-            my_page_window = nullptr;
-        });
-    }
-    
     if (AuthManager::getInstance().isLoggedIn()) {
-        my_page_window->updateUserInfo(AuthManager::getInstance().getCurrentUser());
+        const User& current_user = AuthManager::getInstance().getCurrentUser();
+        if (!my_page_window) {
+            my_page_window = std::make_unique<MyPageWindow>(*this, current_user); // Create with unique_ptr
+            // Connect the signal from MyPageWindow to show the password change window
+            my_page_window->signal_change_password_request().connect(
+                sigc::mem_fun(*this, &VirtualFitnessCoachWindow::show_password_change_window));
+            // Connect the signal from MyPageWindow to show the profile edit window
+            my_page_window->signal_edit_profile_request().connect(
+                sigc::mem_fun(*this, &VirtualFitnessCoachWindow::show_profile_edit_window));
+            
+            // Connect to the hide signal to reset the unique_ptr when the window is closed
+            my_page_window->signal_hide().connect([this]() {
+                std::cout << "MyPageWindow hidden, resetting unique_ptr." << std::endl;
+                my_page_window.reset(); 
+            });
+        } else {
+            // If window already exists, just update its user info
+            my_page_window->updateUserInfo(current_user);
+        }
+        my_page_window->present();
+    } else {
+        std::cerr << "Cannot open MyPage: User not logged in." << std::endl;
+        // Optionally, show a message dialog to the user
     }
-    
-    my_page_window->present();
 }
 
 void VirtualFitnessCoachWindow::show_profile_edit_window(const User& user) {
     if (!profile_edit_window) {
-        profile_edit_window = Gtk::make_managed<ProfileEditWindow>(*this, user); // Create and manage with GTK
+        profile_edit_window = std::make_unique<ProfileEditWindow>(*this, user); // Create with unique_ptr
         profile_edit_window->set_modal(true);
 
         // Connect signals from ProfileEditWindow
@@ -181,6 +185,10 @@ void VirtualFitnessCoachWindow::show_profile_edit_window(const User& user) {
             // User cancelled, hide profile edit window and show MyPage
             if (profile_edit_window) profile_edit_window->hide();
             if (my_page_window) my_page_window->present(); // Show MyPage again
+        });
+        profile_edit_window->signal_hide().connect([this]() {
+            std::cout << "ProfileEditWindow hidden, resetting unique_ptr." << std::endl;
+            profile_edit_window.reset();
         });
     } else {
         // If window already exists, update its user info and show
@@ -203,7 +211,7 @@ void VirtualFitnessCoachWindow::on_profile_update_success(const User& updated_us
 
 void VirtualFitnessCoachWindow::show_password_change_window() {
     if (!password_change_window) {
-        password_change_window = Gtk::make_managed<PasswordChangeWindow>(*this); // Create and manage with GTK
+        password_change_window = std::make_unique<PasswordChangeWindow>(*this); // Create with unique_ptr
         password_change_window->set_modal(true);
 
         // Connect signals from PasswordChangeWindow
@@ -223,16 +231,21 @@ void VirtualFitnessCoachWindow::show_password_change_window() {
                 my_page_window->present(); // Show MyPage again
             }
         });
+        password_change_window->signal_hide().connect([this]() {
+            std::cout << "PasswordChangeWindow hidden, resetting unique_ptr." << std::endl;
+            password_change_window.reset();
+        });
     }
     if (password_change_window) password_change_window->present();
 }
 
 void VirtualFitnessCoachWindow::on_history_clicked() {
     if (!exercise_history_window) {
-        exercise_history_window = Gtk::make_managed<ExerciseHistoryWindow>(*this);
+        exercise_history_window = std::make_unique<ExerciseHistoryWindow>(*this); // Create with unique_ptr
         exercise_history_window->set_modal(true);
         exercise_history_window->signal_hide().connect([this]() {
-            exercise_history_window = nullptr;
+            std::cout << "ExerciseHistoryWindow hidden, resetting unique_ptr." << std::endl;
+            exercise_history_window.reset();
         });
     }
     exercise_history_window->present();

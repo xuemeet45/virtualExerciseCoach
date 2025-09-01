@@ -38,10 +38,10 @@ private:
     Gtk::ScrolledWindow scrolled_window;
     Gtk::Button back_button;
     // std::vector<std::unique_ptr<PoseDetectionWindow>> pose_windows; // Removed
-    MyPageWindow* my_page_window = nullptr; // Changed to raw pointer, GTK manages lifecycle
-    PasswordChangeWindow* password_change_window = nullptr; // Changed to raw pointer
-    ProfileEditWindow* profile_edit_window = nullptr; // Changed to raw pointer
-    ExerciseHistoryWindow* exercise_history_window = nullptr; // New raw pointer for ExerciseHistoryWindow
+    std::unique_ptr<MyPageWindow> my_page_window; // Changed to unique_ptr for explicit ownership
+    std::unique_ptr<PasswordChangeWindow> password_change_window; // Changed to unique_ptr
+    std::unique_ptr<ProfileEditWindow> profile_edit_window; // Changed to unique_ptr
+    std::unique_ptr<ExerciseHistoryWindow> exercise_history_window; // Changed to unique_ptr
     std::unique_ptr<ExerciseDetailWindow> m_exercise_detail_window; // New unique pointer for ExerciseDetailWindow
 };
 
