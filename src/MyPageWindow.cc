@@ -32,7 +32,7 @@ MyPageWindow::MyPageWindow(Gtk::Window& parent, const User& user) // Accept pare
     set_title("バーチャルエクササイズコーチ - マイページ");
     set_default_size(600, 700); // Slightly taller for better spacing
     set_modal(true);
-    set_deletable(true);
+    set_deletable(false); // Prevent GTKmm from destroying the window when 'x' is pressed
     set_resizable(true);
     set_transient_for(parent); // Set MyPageWindow as transient for the main window
     
@@ -267,7 +267,7 @@ void MyPageWindow::on_logout_clicked() {
     hide();
 }
 
-bool MyPageWindow::on_delete_event(GdkEventAny* event) {
+bool MyPageWindow::on_close_request() {
     // Just hide the window instead of destroying it
     hide();
     return true; // Indicate that the event has been handled

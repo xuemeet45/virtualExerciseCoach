@@ -27,6 +27,9 @@ private:
     void on_back_clicked();
     void on_logout_clicked();
 
+    // Override default close request to just hide the window
+    bool on_close_request() override;
+
     // Signal
     sigc::signal<void()> m_signal_change_password_request;
     sigc::signal<void(const User&)> m_signal_edit_profile_request; // New signal for profile edit
