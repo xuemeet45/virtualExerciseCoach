@@ -13,11 +13,18 @@
 
 extern DatabaseManager* global_db_manager; // Declare global_db_manager
 
-const char* joint_names[17] = {
+const char* joint_names_en[17] = {
     "Nose", "Left Eye", "Right Eye", "Left Ear", "Right Ear",
     "Left Shoulder", "Right Shoulder", "Left Elbow", "Right Elbow",
     "Left Wrist", "Right Wrist", "Left Hip", "Right Hip",
     "Left Knee", "Right Knee", "Left Ankle", "Right Ankle"
+};
+
+const char* joint_names_jp[17] = {
+    "鼻", "左目", "右目", "左耳", "右耳",
+    "左肩", "右肩", "左肘", "右肘",
+    "左手首", "右手首", "左股関節", "右股関節",
+    "左膝", "右膝", "左足首", "右足首"
 };
 
 // Helper function to draw pose skeleton
@@ -89,9 +96,9 @@ PoseDetectionWindow::PoseDetectionWindow(const Exercise& exercise, int exercise_
 
     // Create UI elements
     title_label.set_markup("<big><b>" + exercise.get_name() + "</b></big>");
-    update_status_label("Initializing camera...", "black", 20); // Initial message with larger font
-    close_button.set_label("Close");
-    record_button.set_label("Record Reference Pose");
+    update_status_label("Initializing camera... / カメラを初期化中...", "black", 20); // Initial message with larger font
+    close_button.set_label("Close / 閉じる");
+    record_button.set_label("Record Reference Pose / 参照ポーズを記録");
 
     // Configure the drawing area
     drawing_area.set_size_request(640, 480);
@@ -251,7 +258,7 @@ void PoseDetectionWindow::start_camera() {
         cap.open(0);
         if (!cap.isOpened()) {
             std::cerr << "Error: Could not open camera" << std::endl;
-            update_status_label("Error: Could not open camera", "red");
+            update_status_label("Error: Could not open camera / エラー：カメラを開けませんでした", "red");
             return;
         }
 
@@ -367,7 +374,7 @@ bool PoseDetectionWindow::update_frame() {
                                 float dist = std::sqrt(dx * dx + dy * dy);
                                 
                                 if (dist > 0.05) { // Threshold for incorrect joint
-                                    error_message_queue.push_back("Adjust " + std::string(joint_names[i]));
+                                    error_message_queue.push_back("Adjust " + std::string(joint_names_en[i]) + " / " + std::string(joint_names_jp[i]) + "を調整してください");
                                 }
                             }
                             
@@ -382,7 +389,7 @@ bool PoseDetectionWindow::update_frame() {
                                 
                                 bool is_incorrect = false;
                                 for (const auto& msg : error_message_queue) {
-                                    if (msg.find(joint_names[i]) != std::string::npos) {
+                                    if (msg.find(joint_names_en[i]) != std::string::npos) {
                                         is_incorrect = true;
                                         break;
                                     }
@@ -400,7 +407,7 @@ bool PoseDetectionWindow::update_frame() {
                                 m_is_pose_correct = false;
                                 m_correct_pose_frames_count = 0;
                             } else {
-                                update_status_label("Great! All joints match.", "green", 20);
+                                update_status_label("Great! All joints match. / 素晴らしい！すべての関節が一致しています。", "green", 20);
                                 m_is_pose_correct = true;
                                 m_correct_pose_frames_count++;
 
@@ -420,7 +427,7 @@ bool PoseDetectionWindow::update_frame() {
                                 }
                             }
                         } else if (!has_reference) {
-                            update_status_label("No reference pose recorded for this exercise.", "black", 20);
+                            update_status_label("No reference pose recorded for this exercise. / このエクササイズの参照ポーズは記録されていません。", "black", 20);
                             m_is_pose_correct = false;
                             m_correct_pose_frames_count = 0;
                         }
@@ -436,11 +443,11 @@ bool PoseDetectionWindow::update_frame() {
             m_correct_pose_frames_count = 0;
         }
     } else {
-        update_status_label("TFLite model not loaded, running camera test mode", "black", 20);
-        cv::putText(frame, "Camera Test Mode - No Pose Detection", 
+        update_status_label("TFLite model not loaded, running camera test mode / TFLiteモデルがロードされていません。カメラテストモードで実行中", "black", 20);
+        cv::putText(frame, "Camera Test Mode - No Pose Detection / カメラテストモード - ポーズ検出なし", 
                    cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 1.0, 
                    cv::Scalar(0, 255, 0), 2);
-        cv::putText(frame, "Camera is working correctly!", 
+        cv::putText(frame, "Camera is working correctly! / カメラは正常に動作しています！", 
                    cv::Point(10, 70), cv::FONT_HERSHEY_SIMPLEX, 0.8, 
                    cv::Scalar(255, 255, 255), 2);
         m_is_pose_correct = false;
@@ -449,15 +456,15 @@ bool PoseDetectionWindow::update_frame() {
 
     // Add countdown and recording overlay
     if (is_counting_down) {
-        cv::putText(frame, "Get Ready!", 
+        cv::putText(frame, "Get Ready! / 準備してください！", 
                    cv::Point(frame.cols/2 - 100, frame.rows/2 - 50), 
                    cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255, 255, 0), 3);
         cv::putText(frame, std::to_string(countdown_value), 
                    cv::Point(frame.cols/2 - 30, frame.rows/2 + 20), 
                    cv::FONT_HERSHEY_SIMPLEX, 3.0, cv::Scalar(255, 0, 0), 4);
-        update_status_label("Get ready! Recording in " + std::to_string(countdown_value) + "...", "blue", 20);
+        update_status_label("Get ready! Recording in " + std::to_string(countdown_value) + "... / 準備してください！" + std::to_string(countdown_value) + "秒後に記録開始...", "blue", 20);
     } else if (is_recording) {
-        cv::putText(frame, "RECORDING", 
+        cv::putText(frame, "RECORDING / 記録中", 
                    cv::Point(frame.cols/2 - 80, frame.rows/2 - 50), 
                    cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0, 0, 255), 3);
         
@@ -469,7 +476,7 @@ bool PoseDetectionWindow::update_frame() {
                    cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(255, 255, 255), 2);
         
         cv::circle(frame, cv::Point(frame.cols - 50, 50), 15, cv::Scalar(0, 0, 255), -1);
-        update_status_label("Recording... (" + std::to_string(seconds) + "." + std::to_string(tenths) + "/5.0 seconds)", "blue", 20);
+        update_status_label("Recording... (" + std::to_string(seconds) + "." + std::to_string(tenths) + "/5.0 seconds) / 記録中... (" + std::to_string(seconds) + "." + std::to_string(tenths) + "/5.0 秒)", "blue", 20);
     }
 
     int width = frame.cols;
@@ -556,7 +563,7 @@ void PoseDetectionWindow::record_reference_pose() {
                     recorded_poses.clear();
                     countdown_connection = Glib::signal_timeout().connect(
                         sigc::mem_fun(*this, &PoseDetectionWindow::on_countdown_timer), 1000);
-                    update_status_label("Get ready! Recording in " + std::to_string(countdown_value) + "...", "blue", 20);
+                    update_status_label("Get ready! Recording in " + std::to_string(countdown_value) + "... / 準備してください！" + std::to_string(countdown_value) + "秒後に記録開始...", "blue", 20);
                 }
                 dialog->hide();
             }
@@ -573,14 +580,14 @@ void PoseDetectionWindow::record_reference_pose() {
     recorded_poses.clear();
     countdown_connection = Glib::signal_timeout().connect(
         sigc::mem_fun(*this, &PoseDetectionWindow::on_countdown_timer), 1000);
-    update_status_label("Get ready! Recording in " + std::to_string(countdown_value) + "...", "blue", 20);
+    update_status_label("Get ready! Recording in " + std::to_string(countdown_value) + "... / 準備してください！" + std::to_string(countdown_value) + "秒後に記録開始...", "blue", 20);
 }
 
 bool PoseDetectionWindow::on_countdown_timer() {
     countdown_value--;
     
     if (countdown_value > 0) {
-        update_status_label("Get ready! Recording in " + std::to_string(countdown_value) + "...", "blue", 20);
+        update_status_label("Get ready! Recording in " + std::to_string(countdown_value) + "... / 準備してください！" + std::to_string(countdown_value) + "秒後に記録開始...", "blue", 20);
         return true; // Continue countdown
     } else {
         // Countdown finished, start recording
@@ -589,7 +596,7 @@ bool PoseDetectionWindow::on_countdown_timer() {
         recording_duration = 0;
         recorded_poses.clear();
         
-        update_status_label("Recording... (0/5 seconds)", "blue", 20);
+        update_status_label("Recording... (0/5 seconds) / 記録中... (0/5 秒)", "blue", 20);
         
         // Start recording timer (update every 100ms for smoother progress)
         recording_connection = Glib::signal_timeout().connect(
@@ -610,7 +617,7 @@ bool PoseDetectionWindow::on_recording_timer() {
         
         int seconds = recording_duration / 1000;
         int tenths = (recording_duration % 1000) / 100;
-        update_status_label("Recording... (" + std::to_string(seconds) + "." + std::to_string(tenths) + "/5.0 seconds)", "blue", 20);
+        update_status_label("Recording... (" + std::to_string(seconds) + "." + std::to_string(tenths) + "/5.0 seconds) / 記録中... (" + std::to_string(seconds) + "." + std::to_string(tenths) + "/5.0 秒)", "blue", 20);
         
         return true; // Continue recording
     } else {
@@ -619,7 +626,7 @@ bool PoseDetectionWindow::on_recording_timer() {
         
         // Process recorded poses
         if (recorded_poses.empty()) {
-            update_status_label("No poses recorded. Please try again.", "red", 20);
+            update_status_label("No poses recorded. Please try again. / ポーズが記録されませんでした。もう一度お試しください。", "red", 20);
             record_button.set_sensitive(true);
             return false;
         }
@@ -648,9 +655,9 @@ bool PoseDetectionWindow::on_recording_timer() {
         }
         
         if (all_success) {
-            update_status_label("Reference pose recorded successfully! (" + std::to_string(recorded_poses.size()) + " poses captured)", "green", 20);
+            update_status_label("Reference pose recorded successfully! (" + std::to_string(recorded_poses.size()) + " poses captured) / 参照ポーズが正常に記録されました！(" + std::to_string(recorded_poses.size()) + "ポーズをキャプチャ)", "green", 20);
         } else {
-            update_status_label("Failed to record reference pose.", "red", 20);
+            update_status_label("Failed to record reference pose. / 参照ポーズの記録に失敗しました。", "red", 20);
         }
         
         record_button.set_sensitive(true);
