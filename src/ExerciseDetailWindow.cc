@@ -24,13 +24,22 @@ ExerciseDetailWindow::ExerciseDetailWindow(const Exercise& exercise)
     }
 
     title_label.set_markup("<big><b>" + exercise.get_name() + "</b></big>");
-    tips_label.set_text(exercise.get_name() + "のやり方:");
+    instructions_label.set_markup("<b>やり方:</b>"); // Set label for instructions
     try_button.set_label("Try");
+
+    // Set instructions text
+    instructions_text.get_buffer()->set_text(exercise.get_instructions());
+    instructions_text.set_editable(false);
+    instructions_text.set_wrap_mode(Gtk::WrapMode::WORD_CHAR);
+    instructions_scroll.set_child(instructions_text);
+    instructions_scroll.set_policy(Gtk::PolicyType::AUTOMATIC, Gtk::PolicyType::AUTOMATIC);
+    instructions_scroll.set_size_request(-1, 150); // Set a fixed height for the scrollable area
 
     main_box.set_margin(10);
     main_box.set_spacing(10);
     main_box.append(title_label);
-    main_box.append(tips_label);
+    main_box.append(instructions_label); // Add instructions label
+    main_box.append(instructions_scroll); // Add scrollable instructions text view
     main_box.append(try_button);
 
     // Connect the Try button to open the pose detection window
