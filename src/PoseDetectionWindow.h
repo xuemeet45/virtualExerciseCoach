@@ -68,6 +68,18 @@ private:
     bool m_is_pose_correct; // To track if the current pose is correct
     int m_correct_pose_frames_count; // To count consecutive correct frames
     const int REQUIRED_CORRECT_FRAMES = 30; // Number of consecutive frames for a pose to be "performed"
+
+    // Debouncing for text-to-speech
+    long long m_last_error_spoken_time; // Last time *any* error message was spoken (ms)
+    long long m_last_correct_spoken_time; // Last time "all correct" message was spoken (ms)
+    const long long SPEAK_DEBOUNCE_MS = 3000; // 3 seconds debounce for speaking any message
+    bool m_all_joints_match_spoken_this_cycle; // Flag to ensure "all joints match" is spoken only once per correct cycle
+    long long m_pose_correct_start_time; // Time when the pose first became correct (ms)
+    const long long POSE_CORRECT_SPEAK_DELAY_MS = 3000; // Delay before speaking "all correct" message (3 seconds)
+    bool m_pose_guide_active; // Flag to control if voice guidance is active
+    long long m_pose_incorrect_start_time; // Time when the pose first became incorrect (ms)
+    const long long GUIDE_REACTIVATION_DELAY_MS = 5000; // Delay before reactivating guide after a correct pose (5 seconds)
+    const float JOINT_ERROR_THRESHOLD = 0.10; // Increased threshold for joint inaccuracy (e.g., 0.10 for more leniency)
 };
 
 #endif // POSE_DETECTION_WINDOW_H

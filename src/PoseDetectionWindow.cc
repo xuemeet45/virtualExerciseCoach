@@ -10,6 +10,7 @@
 #include "DatabaseManager.h" // Add this include
 #include <algorithm>
 #include <sstream> // Added for std::ostringstream
+#include <cstdlib> // For system()
 
 extern DatabaseManager* global_db_manager; // Declare global_db_manager
 
@@ -86,7 +87,13 @@ PoseDetectionWindow::PoseDetectionWindow(const Exercise& exercise, int exercise_
       m_exercise_history_id(exercise_history_id), // Initialize new member
       m_session_start_time_ms(0),
       m_is_pose_correct(false),
-      m_correct_pose_frames_count(0) {
+      m_correct_pose_frames_count(0),
+      m_last_error_spoken_time(0), // Initialize new debounce timer
+      m_last_correct_spoken_time(0), // Initialize new debounce timer
+      m_all_joints_match_spoken_this_cycle(false),
+      m_pose_correct_start_time(0), // Initialize new member
+      m_pose_guide_active(true), // Pose guide is active by default
+      m_pose_incorrect_start_time(0) { // Initialize new member
     
     set_title("バーチャルエクササイズコーチ - ポーズ検出");
     set_default_size(800, 600);
@@ -97,8 +104,8 @@ PoseDetectionWindow::PoseDetectionWindow(const Exercise& exercise, int exercise_
     // Create UI elements
     title_label.set_markup("<big><b>" + exercise.get_name() + "</b></big>");
     update_status_label("Initializing camera... / カメラを初期化中...", "black", 20); // Initial message with larger font
-    close_button.set_label("Close / 閉じる");
-    record_button.set_label("Record Reference Pose / 参照ポーズを記録");
+    close_button.set_label("閉じる");
+    record_button.set_label("参照ポーズを記録");
 
     // Configure the drawing area
     drawing_area.set_size_request(640, 480);
@@ -370,46 +377,102 @@ bool PoseDetectionWindow::update_frame() {
                                 float ref_x = ref_keypoints[i][0];
                                 float ref_y = ref_keypoints[i][1];
                                 float dx = user_x - ref_x;
-                                float dy = user_y - ref_y;
-                                float dist = std::sqrt(dx * dx + dy * dy);
-                                
-                                if (dist > 0.05) { // Threshold for incorrect joint
-                                    error_message_queue.push_back("Adjust " + std::string(joint_names_en[i]) + " / " + std::string(joint_names_jp[i]) + "を調整してください");
-                                }
-                            }
-                            
-                            // Draw keypoints with color feedback
-                            for (int i = 0; i < num_keypoints; i++) {
-                                float y = output_data[i * keypoint_size];
-                                float x = output_data[i * keypoint_size + 1];
-                                float confidence = output_data[i * keypoint_size + 2];
-                                int px = static_cast<int>(x * 640);
-                                int py = static_cast<int>(y * 480);
-                                cv::Point keypoint(px, py);
-                                
-                                bool is_incorrect = false;
-                                for (const auto& msg : error_message_queue) {
-                                    if (msg.find(joint_names_en[i]) != std::string::npos) {
-                                        is_incorrect = true;
-                                        break;
-                                    }
-                                }
-                                cv::Scalar color = is_incorrect ? cv::Scalar(0, 0, 255) : cv::Scalar(0, 255, 0); // Red or Green
-                                cv::circle(frame, keypoint, 5, color, -1);
-                                cv::putText(frame, std::to_string(i), keypoint + cv::Point(5, 5), 
-                                            cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 255), 1);
-                            }
-                            
-                            // Display one error message at a time
-                            if (!error_message_queue.empty()) {
-                                current_error_message = error_message_queue[0];
-                                update_status_label(current_error_message, "red", 20);
-                                m_is_pose_correct = false;
-                                m_correct_pose_frames_count = 0;
-                            } else {
-                                update_status_label("Great! All joints match. / 素晴らしい！すべての関節が一致しています。", "green", 20);
-                                m_is_pose_correct = true;
-                                m_correct_pose_frames_count++;
+                                  float dy = user_y - ref_y;
+                                  float dist = std::sqrt(dx * dx + dy * dy);
+                                  
+                                  long long current_time_ms = g_get_monotonic_time() / 1000; // Current time in milliseconds
+                                  if (dist > JOINT_ERROR_THRESHOLD) { // Use configurable threshold for incorrect joint
+                                      std::string jp_message = std::string(joint_names_jp[i]) + "を調整してください";
+                                      error_message_queue.push_back("Adjust " + std::string(joint_names_en[i]) + " / " + jp_message);
+                                  }
+                              }
+                              
+                              // Draw keypoints with color feedback
+                              for (int i = 0; i < num_keypoints; i++) {
+                                  float y = output_data[i * keypoint_size];
+                                  float x = output_data[i * keypoint_size + 1];
+                                  float confidence = output_data[i * keypoint_size + 2];
+                                  int px = static_cast<int>(x * 640);
+                                  int py = static_cast<int>(y * 480);
+                                  cv::Point keypoint(px, py);
+                                  
+                                  bool is_incorrect = false;
+                                  for (const auto& msg : error_message_queue) {
+                                      if (msg.find(joint_names_en[i]) != std::string::npos) {
+                                          is_incorrect = true;
+                                          break;
+                                      }
+                                  }
+                                  cv::Scalar color = is_incorrect ? cv::Scalar(0, 0, 255) : cv::Scalar(0, 255, 0); // Red or Green
+                                  cv::circle(frame, keypoint, 5, color, -1);
+                                  cv::putText(frame, std::to_string(i), keypoint + cv::Point(5, 5), 
+                                              cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 255), 1);
+                              }
+                              
+                              // Display one error message at a time and debounce speech
+                                  long long current_time_ms = g_get_monotonic_time() / 1000;
+                                  if (!error_message_queue.empty()) {
+                                      current_error_message = error_message_queue[0];
+                                      m_is_pose_correct = false;
+                                      m_correct_pose_frames_count = 0;
+                                      m_all_joints_match_spoken_this_cycle = false; // Reset flag when pose is incorrect
+                                      m_pose_correct_start_time = 0; // Reset correct pose start time
+                                      
+                                      if (!is_recording) { // Only show/speak guide if not recording
+                                          update_status_label(current_error_message, "red", 20);
+                                          
+                                          // If pose guide is not active, check for sustained incorrect pose to reactivate
+                                          if (!m_pose_guide_active) {
+                                              if (m_pose_incorrect_start_time == 0) { // If just became incorrect
+                                                  m_pose_incorrect_start_time = current_time_ms;
+                                              } else if (current_time_ms - m_pose_incorrect_start_time >= GUIDE_REACTIVATION_DELAY_MS) {
+                                                  m_pose_guide_active = true; // Reactivate guide after 5 seconds of continuous incorrect pose
+                                                  m_last_error_spoken_time = 0; // Allow immediate speaking of error
+                                              }
+                                          }
+                                          
+                                          // If pose guide is active, speak error messages
+                                          if (m_pose_guide_active) {
+                                              if (current_time_ms - m_last_error_spoken_time > SPEAK_DEBOUNCE_MS) {
+                                                  std::string command = "say -v Kyoko \"" + current_error_message.substr(current_error_message.find("/") + 2) + "\" &"; // Speak Japanese part
+                                                  system(command.c_str());
+                                                  m_last_error_spoken_time = current_time_ms;
+                                              }
+                                          }
+                                      } else {
+                                          // If recording, clear status label to suppress text feedback
+                                          update_status_label("", "black", 20);
+                                      }
+                                  } else {
+                                      // Pose is correct
+                                      m_pose_incorrect_start_time = 0; // Reset incorrect pose timer
+                                      
+                                      if (!m_is_pose_correct) { // If pose just became correct
+                                          m_pose_correct_start_time = current_time_ms; // Record start time
+                                      }
+                                      
+                                      if (!is_recording) { // Only show/speak guide if not recording
+                                          std::string jp_message = "素晴らしい！すべての関節が一致しています。";
+                                          update_status_label("Great! All joints match. / " + jp_message, "green", 20);
+                                          
+                                          // Debounce "all joints match" message with a delay
+                                          if (!m_all_joints_match_spoken_this_cycle && 
+                                              (current_time_ms - m_pose_correct_start_time >= POSE_CORRECT_SPEAK_DELAY_MS) &&
+                                              (current_time_ms - m_last_correct_spoken_time > SPEAK_DEBOUNCE_MS)) {
+                                              
+                                              std::string command = "say -v Kyoko \"" + jp_message + "\" &"; // Run in background
+                                              system(command.c_str());
+                                              m_last_correct_spoken_time = current_time_ms;
+                                              m_all_joints_match_spoken_this_cycle = true;
+                                              m_pose_guide_active = false; // Deactivate guide after "Great done"
+                                          }
+                                      } else {
+                                          // If recording, clear status label to suppress text feedback
+                                          update_status_label("", "black", 20);
+                                      }
+                                      
+                                      m_is_pose_correct = true;
+                                      m_correct_pose_frames_count++;
 
                                 // If pose is consistently correct, update status to 'performed'
                                 if (m_is_pose_correct && m_correct_pose_frames_count == REQUIRED_CORRECT_FRAMES) {
@@ -456,15 +519,15 @@ bool PoseDetectionWindow::update_frame() {
 
     // Add countdown and recording overlay
     if (is_counting_down) {
-        cv::putText(frame, "Get Ready! / 準備してください！", 
+        cv::putText(frame, "Get Ready!", 
                    cv::Point(frame.cols/2 - 100, frame.rows/2 - 50), 
                    cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255, 255, 0), 3);
         cv::putText(frame, std::to_string(countdown_value), 
                    cv::Point(frame.cols/2 - 30, frame.rows/2 + 20), 
                    cv::FONT_HERSHEY_SIMPLEX, 3.0, cv::Scalar(255, 0, 0), 4);
-        update_status_label("Get ready! Recording in " + std::to_string(countdown_value) + "... / 準備してください！" + std::to_string(countdown_value) + "秒後に記録開始...", "blue", 20);
+        update_status_label("準備してください！" + std::to_string(countdown_value) + "秒後に記録開始...", "blue", 20);
     } else if (is_recording) {
-        cv::putText(frame, "RECORDING / 記録中", 
+        cv::putText(frame, "Recording...", 
                    cv::Point(frame.cols/2 - 80, frame.rows/2 - 50), 
                    cv::FONT_HERSHEY_SIMPLEX, 1.2, cv::Scalar(0, 0, 255), 3);
         
@@ -476,7 +539,7 @@ bool PoseDetectionWindow::update_frame() {
                    cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(255, 255, 255), 2);
         
         cv::circle(frame, cv::Point(frame.cols - 50, 50), 15, cv::Scalar(0, 0, 255), -1);
-        update_status_label("Recording... (" + std::to_string(seconds) + "." + std::to_string(tenths) + "/5.0 seconds) / 記録中... (" + std::to_string(seconds) + "." + std::to_string(tenths) + "/5.0 秒)", "blue", 20);
+        update_status_label("記録中... (" + std::to_string(seconds) + "." + std::to_string(tenths) + "/3.0 秒)", "blue", 20);
     }
 
     int width = frame.cols;
@@ -563,7 +626,7 @@ void PoseDetectionWindow::record_reference_pose() {
                     recorded_poses.clear();
                     countdown_connection = Glib::signal_timeout().connect(
                         sigc::mem_fun(*this, &PoseDetectionWindow::on_countdown_timer), 1000);
-                    update_status_label("Get ready! Recording in " + std::to_string(countdown_value) + "... / 準備してください！" + std::to_string(countdown_value) + "秒後に記録開始...", "blue", 20);
+                    update_status_label("準備してください！" + std::to_string(countdown_value) + "秒後に記録開始...", "blue", 20);
                 }
                 dialog->hide();
             }
@@ -580,14 +643,14 @@ void PoseDetectionWindow::record_reference_pose() {
     recorded_poses.clear();
     countdown_connection = Glib::signal_timeout().connect(
         sigc::mem_fun(*this, &PoseDetectionWindow::on_countdown_timer), 1000);
-    update_status_label("Get ready! Recording in " + std::to_string(countdown_value) + "... / 準備してください！" + std::to_string(countdown_value) + "秒後に記録開始...", "blue", 20);
+    update_status_label("準備してください！" + std::to_string(countdown_value) + "秒後に記録開始...", "blue", 20);
 }
 
 bool PoseDetectionWindow::on_countdown_timer() {
     countdown_value--;
     
     if (countdown_value > 0) {
-        update_status_label("Get ready! Recording in " + std::to_string(countdown_value) + "... / 準備してください！" + std::to_string(countdown_value) + "秒後に記録開始...", "blue", 20);
+        update_status_label("準備してください！" + std::to_string(countdown_value) + "... / " + std::to_string(countdown_value) + "秒後に記録開始...", "blue", 20);
         return true; // Continue countdown
     } else {
         // Countdown finished, start recording
@@ -596,7 +659,7 @@ bool PoseDetectionWindow::on_countdown_timer() {
         recording_duration = 0;
         recorded_poses.clear();
         
-        update_status_label("Recording... (0/5 seconds) / 記録中... (0/5 秒)", "blue", 20);
+        update_status_label("記録中... (0/5 秒)", "blue", 20);
         
         // Start recording timer (update every 100ms for smoother progress)
         recording_connection = Glib::signal_timeout().connect(
@@ -609,7 +672,7 @@ bool PoseDetectionWindow::on_countdown_timer() {
 bool PoseDetectionWindow::on_recording_timer() {
     recording_duration += 100; // Increment by 100ms
     
-    if (recording_duration < 5000) { // Less than 5 seconds
+    if (recording_duration < 3000) { // Less than 3 seconds
         // Record current pose if available
         if (last_detected_keypoints.size() == 17 * 3) {
             recorded_poses.push_back(last_detected_keypoints);
@@ -617,7 +680,7 @@ bool PoseDetectionWindow::on_recording_timer() {
         
         int seconds = recording_duration / 1000;
         int tenths = (recording_duration % 1000) / 100;
-        update_status_label("Recording... (" + std::to_string(seconds) + "." + std::to_string(tenths) + "/5.0 seconds) / 記録中... (" + std::to_string(seconds) + "." + std::to_string(tenths) + "/5.0 秒)", "blue", 20);
+        update_status_label("記録中... (" + std::to_string(seconds) + "." + std::to_string(tenths) + "/3.0 秒)", "blue", 20);
         
         return true; // Continue recording
     } else {
