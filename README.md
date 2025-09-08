@@ -2,7 +2,7 @@
 
 # Virtual Exercise Coach (バーチャルエクササイズコーチ)
 
-A modern desktop application for real-time exercise pose detection and coaching with complete user authentication and management system. Built with C++, GTKmm, OpenCV, TensorFlow Lite, and PostgreSQL.
+A modern desktop application for real-time exercise pose detection and coaching with a complete user authentication and management system. Built with C++, GTKmm, OpenCV, TensorFlow Lite, and PostgreSQL.
 
 ## 🚀 Features
 
@@ -29,7 +29,7 @@ A modern desktop application for real-time exercise pose detection and coaching 
 
 ### 🎯 Exercise Categories
 - **Strength Training**: Various strength exercises
-- **Yoga Poses**: 5 classic yoga poses with Japanese names
+- **Yoga Poses**: 10 classic yoga poses with Japanese names (e.g., Tree Pose, Warrior I, Warrior II, Triangle Pose, Mountain Pose)
 - **Cardio Exercises**: Cardiovascular workout routines
 - **Flexibility Training**: Stretching and flexibility exercises
 
@@ -39,6 +39,8 @@ A modern desktop application for real-time exercise pose detection and coaching 
 - macOS (tested on macOS 14+)
 - Homebrew package manager
 - PostgreSQL 14+
+- PostgreSQL client libraries (e.g., `libpq`)
+- OpenSSL 3+
 - C++17 compiler (clang++)
 
 ### Installation
@@ -48,8 +50,8 @@ A modern desktop application for real-time exercise pose detection and coaching 
 # Install required packages via Homebrew
 brew install gtkmm4 opencv postgresql@14 openssl@3
 
-# Install TensorFlow Lite (if not already present)
-# The project includes prebuilt TensorFlow Lite libraries
+# TensorFlow Lite: The project includes prebuilt TensorFlow Lite libraries,
+# so no separate installation is required for the library itself.
 ```
 
 2. **Database Setup**
@@ -62,19 +64,24 @@ psql -d fitnessdb -f database_schema.sql
 
 # Create admin user (optional)
 psql -d fitnessdb -f create_admin_user.sql
+
+# Populate with sample yoga exercises (optional)
+psql -d fitnessdb -f clear_and_insert_yoga.sql
 ```
+**Default Database Connection (from src/main.cc):**
+`dbname=fitnessdb user=admin password=admin hostaddr=127.0.0.1 port=5432`
 
 3. **Build and Run**
 ```bash
-# Using the provided script (recommended)
-./compile_and_run_gtkmm.sh
-
-# Or using CMake
+# Using CMake (recommended)
 mkdir build
 cd build
 cmake ..
 make
 ./VirtualExerciseCoach
+
+# Or using the provided script (for quick setup, uses CMake internally)
+./compile_and_run_gtkmm.sh
 ```
 
 ## 📋 Database Schema
@@ -128,23 +135,23 @@ The application uses PostgreSQL with the following tables:
 
 ```
 gtkmm-sample/
-├── src/                          # C++ source files
-│   ├── main.cc                   # Application entry point
-│   ├── VirtualFitnessCoachWindow.cc  # Main application window
-│   ├── LoginWindow.cc            # Authentication login
-│   ├── RegisterWindow.cc         # User registration
-│   ├── MyPageWindow.cc           # User profile and stats
-│   ├── PoseDetectionWindow.cc    # Real-time pose detection
-│   ├── DatabaseManager.cc        # Database operations
-│   ├── AuthManager.cc            # JWT authentication
-│   └── *.h                       # Header files
-├── models/                       # TensorFlow Lite models
+├── src/                          # C++ source files (application logic, UI components, managers)
+│   ├── main.cc                   # Application entry point and setup
+│   ├── VirtualFitnessCoachWindow.cc  # Main application window and navigation
+│   ├── LoginWindow.cc            # User authentication login interface
+│   ├── RegisterWindow.cc         # User registration interface
+│   ├── MyPageWindow.cc           # User profile and statistics display
+│   ├── PoseDetectionWindow.cc    # Real-time pose detection and comparison
+│   ├── DatabaseManager.cc        # Handles all PostgreSQL database interactions
+│   ├── AuthManager.cc            # Manages JWT token-based authentication
+│   └── *.h                       # Corresponding header files for source files
+├── models/                       # TensorFlow Lite models (e.g., MoveNet)
 │   └── movenet_singlepose_lightning.tflite
-├── images/                       # Application images
-├── database_schema.sql           # Database setup
-├── create_admin_user.sql         # Admin user creation
-├── compile_and_run_gtkmm.sh      # Build script
-└── CMakeLists.txt               # CMake configuration
+├── images/                       # Application images and assets
+├── database_schema.sql           # SQL script for setting up the PostgreSQL database schema
+├── create_admin_user.sql         # SQL script for creating a default admin user
+├── compile_and_run_gtkmm.sh      # Convenience script for building and running the application (uses CMake)
+└── CMakeLists.txt                # CMake build configuration file
 ```
 
 ## 🔧 Technical Stack
@@ -154,7 +161,7 @@ gtkmm-sample/
 - **AI/ML**: TensorFlow Lite (MoveNet)
 - **Database**: PostgreSQL 14
 - **Authentication**: JWT tokens with OpenSSL
-- **Build System**: CMake + Shell script
+- **Build System**: CMake
 - **Language**: C++17
 
 ## 🐛 Troubleshooting
@@ -162,55 +169,58 @@ gtkmm-sample/
 ### Common Issues
 
 1. **Camera Access Denied**
-   - Ensure camera permissions are granted
-   - Check if another application is using the camera
+   - Ensure camera permissions are granted for the application.
+   - Check if another application is currently using the camera.
 
 2. **Database Connection Failed**
    - Verify PostgreSQL is running: `brew services start postgresql@14`
-   - Check database credentials in `src/main.cc`
-   - Ensure database `fitnessdb` exists
+   - Ensure the `fitnessdb` database exists.
+   - Check the database credentials (default: `dbname=fitnessdb user=admin password=admin hostaddr=127.0.0.1 port=5432`).
 
 3. **Compilation Errors**
    - Update Homebrew packages: `brew update && brew upgrade`
-   - Check OpenSSL installation: `brew install openssl@3`
-   - Verify GTKmm4 installation: `brew install gtkmm4`
+   - Ensure `gtkmm4`, `opencv`, `postgresql@14`, and `openssl@3` are correctly installed via Homebrew.
+   - Verify C++17 compiler (clang++) is available.
 
 4. **Model Loading Issues**
-   - Ensure `movenet_singlepose_lightning.tflite` is in the `models/` directory
-   - Check file permissions
+   - Ensure `movenet_singlepose_lightning.tflite` is present in the `models/` directory.
+   - Check file permissions for the model file.
 
 ### Performance Optimization
-- **GPU Acceleration**: TensorFlow Lite supports GPU delegates
-- **Memory Management**: Automatic cleanup of pose detection windows
-- **Database Indexing**: Optimized queries with proper indexes
+- **GPU Acceleration**: TensorFlow Lite supports GPU delegates for improved performance.
+- **Memory Management**: Automatic cleanup of pose detection windows and resources.
+- **Database Indexing**: Optimized queries with proper indexes for faster data retrieval.
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+1. Fork the repository.
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`).
+3. Make your changes.
+4. Test thoroughly.
+5. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
+6. Push to the branch (`git push origin feature/AmazingFeature`).
+7. Open a Pull Request.
 
 ## 📄 License
 
-MIT License - see LICENSE file for details
+Distributed under the MIT License. See the project's GitHub repository for details.
 
 ## 🙏 Acknowledgments
 
-- **TensorFlow Lite**: For the MoveNet pose detection model
-- **GTKmm**: For the modern GUI framework
-- **OpenCV**: For computer vision capabilities
-- **PostgreSQL**: For robust database management
+- **TensorFlow Lite**: For the MoveNet pose detection model.
+- **GTKmm**: For the modern GUI framework.
+- **OpenCV**: For computer vision capabilities.
+- **PostgreSQL**: For robust database management.
+- **OpenSSL**: For cryptographic functions used in JWT.
 
 ## 📞 Support
 
 For issues and questions:
-1. Check the troubleshooting section
-2. Review the database schema
-3. Verify all dependencies are installed
-4. Create an issue on GitHub
+1. Check the troubleshooting section above.
+2. Review the database schema and ensure proper setup.
+3. Verify all dependencies are installed and correctly configured.
+4. Create an issue on the GitHub repository.
 
 ---
 
-**Note**: This application is designed for educational and fitness purposes. Always consult with a fitness professional before starting any exercise program. 
+**Note**: This application is designed for educational and fitness purposes. Always consult with a fitness professional before starting any exercise program.
