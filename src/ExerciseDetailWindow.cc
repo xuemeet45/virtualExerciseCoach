@@ -38,6 +38,19 @@ ExerciseDetailWindow::ExerciseDetailWindow(const Exercise& exercise)
     main_box.set_margin(10);
     main_box.set_spacing(10);
     main_box.append(title_label);
+
+    // Load and display image if path is available
+    Glib::ustring image_path = exercise.get_image_path();
+    if (!image_path.empty()) {
+        try {
+            image.set(image_path);
+            image.set_pixel_size(200); // Set a fixed size for the image
+            main_box.append(image);
+        } catch (Glib::Error& ex) {
+            std::cerr << "Error loading image: " << ex.what() << std::endl;
+        }
+    }
+
     main_box.append(instructions_label); // Add instructions label
     main_box.append(instructions_scroll); // Add scrollable instructions text view
     main_box.append(try_button);
