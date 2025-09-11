@@ -65,6 +65,7 @@ private:
 
     int m_exercise_history_id; // Store the ID of the current exercise session
     long long m_session_start_time_ms; // To record the start time of the pose detection session
+    long long m_correct_pose_duration_ms; // To accumulate time when the pose is correct
     bool m_is_pose_correct; // To track if the current pose is correct
     int m_correct_pose_frames_count; // To count consecutive correct frames
     const int REQUIRED_CORRECT_FRAMES = 30; // Number of consecutive frames for a pose to be "performed"

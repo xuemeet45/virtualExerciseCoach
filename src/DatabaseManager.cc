@@ -52,13 +52,29 @@ std::vector<Exercise> DatabaseManager::fetch_exercises(const std::string& query)
         Glib::ustring benefits = PQgetvalue(res, i, 12);
         Glib::ustring common_mistakes = PQgetvalue(res, i, 13);
         Glib::ustring variations = PQgetvalue(res, i, 14);
-        Glib::ustring calories_burned_estimate = PQgetvalue(res, i, 15);
+        Glib::ustring calories_burned_estimate_str = PQgetvalue(res, i, 15);
         Glib::ustring updated_at = PQgetvalue(res, i, 16);
+
+        // Parse calories_burned_estimate from string to int
+        int calories_burned_estimate_int = 0;
+        try {
+            std::string s = calories_burned_estimate_str.raw();
+            // Remove " calories/minute" if present
+            size_t pos = s.find(" calories/minute");
+            if (pos != std::string::npos) {
+                s = s.substr(0, pos);
+            }
+            calories_burned_estimate_int = std::stoi(s);
+        } catch (const std::exception& e) {
+            std::cerr << "Error parsing calories_burned_estimate: " << e.what() << " for value: " << calories_burned_estimate_str << std::endl;
+            // Default to 0 if parsing fails
+            calories_burned_estimate_int = 0;
+        }
 
         exercises.emplace_back(id, name, image_path, category, primary_muscle, secondary_muscles,
                                equipment, difficulty_level, instructions, tips, video_url,
                                reps_sets_suggestion, benefits, common_mistakes, variations,
-                               calories_burned_estimate, updated_at);
+                               calories_burned_estimate_int, updated_at);
     }
 
     PQclear(res);

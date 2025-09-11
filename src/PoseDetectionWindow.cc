@@ -86,6 +86,7 @@ PoseDetectionWindow::PoseDetectionWindow(const Exercise& exercise, int exercise_
       is_recording(false),
       m_exercise_history_id(exercise_history_id), // Initialize new member
       m_session_start_time_ms(0),
+      m_correct_pose_duration_ms(0), // Initialize new member
       m_is_pose_correct(false),
       m_correct_pose_frames_count(0),
       m_last_error_spoken_time(0), // Initialize new debounce timer
@@ -241,10 +242,12 @@ void PoseDetectionWindow::on_hide() {
 
     // Update exercise history when window is hidden
     if (global_db_manager && m_exercise_history_id != -1) {
-        long long current_time_ms = g_get_monotonic_time() / 1000;
-        int performed_seconds = (m_session_start_time_ms > 0) ? (current_time_ms - m_session_start_time_ms) / 1000 : 0;
-        int duration_minutes = performed_seconds / 60;
-        int calories_burned = 0; // Placeholder, actual calculation might be complex
+        int correct_performed_seconds = m_correct_pose_duration_ms / 1000;
+        int duration_minutes = correct_performed_seconds / 60;
+        
+        // Calculate calories burned based on the exercise's estimate per minute
+        int calories_per_minute = exercise.get_calories_burned_estimate();
+        int calories_burned = (calories_per_minute * correct_performed_seconds) / 60;
 
         std::string final_status = "試行"; // Default status if not performed
         if (m_is_pose_correct && m_correct_pose_frames_count >= REQUIRED_CORRECT_FRAMES) {
@@ -252,9 +255,9 @@ void PoseDetectionWindow::on_hide() {
         }
 
         global_db_manager->update_exercise_session_end(
-            m_exercise_history_id, final_status, performed_seconds, calories_burned, duration_minutes, ""
+            m_exercise_history_id, final_status, correct_performed_seconds, calories_burned, duration_minutes, ""
         );
-        std::cout << "Updated exercise history ID " << m_exercise_history_id << " with status: " << final_status << ", duration: " << performed_seconds << "s" << std::endl;
+        std::cout << "Updated exercise history ID " << m_exercise_history_id << " with status: " << final_status << ", correct duration: " << correct_performed_seconds << "s, calories: " << calories_burned << std::endl;
     }
 }
 
@@ -473,19 +476,22 @@ bool PoseDetectionWindow::update_frame() {
                                       
                                       m_is_pose_correct = true;
                                       m_correct_pose_frames_count++;
+                                      m_correct_pose_duration_ms += 33; // Accumulate correct pose duration (approx 30 FPS, so 33ms per frame)
 
                                 // If pose is consistently correct, update status to 'performed'
-                                if (m_is_pose_correct && m_correct_pose_frames_count == REQUIRED_CORRECT_FRAMES) {
+                                if (m_is_pose_correct && m_correct_pose_frames_count >= REQUIRED_CORRECT_FRAMES) { // Changed to >=
                                     if (global_db_manager && m_exercise_history_id != -1) {
-                                        long long current_time_ms = g_get_monotonic_time() / 1000;
-                                        int performed_seconds = (m_session_start_time_ms > 0) ? (current_time_ms - m_session_start_time_ms) / 1000 : 0;
-                                        int duration_minutes = performed_seconds / 60;
-                                        int calories_burned = 0; // Placeholder
+                                        int correct_performed_seconds = m_correct_pose_duration_ms / 1000;
+                                        int duration_minutes = correct_performed_seconds / 60;
+                                        
+                                        // Calculate calories burned based on the exercise's estimate per minute
+                                        int calories_per_minute = exercise.get_calories_burned_estimate();
+                                        int calories_burned = (calories_per_minute * correct_performed_seconds) / 60;
 
                                         global_db_manager->update_exercise_session_end(
-                                            m_exercise_history_id, "performed", performed_seconds, calories_burned, duration_minutes, ""
+                                            m_exercise_history_id, "performed", correct_performed_seconds, calories_burned, duration_minutes, ""
                                         );
-                                        std::cout << "Exercise ID " << exercise.get_id() << " marked as 'performed' in history ID " << m_exercise_history_id << std::endl;
+                                        std::cout << "Exercise ID " << exercise.get_id() << " marked as 'performed' in history ID " << m_exercise_history_id << ", calories: " << calories_burned << std::endl;
                                     }
                                 }
                             }
@@ -493,6 +499,7 @@ bool PoseDetectionWindow::update_frame() {
                             update_status_label("No reference pose recorded for this exercise. / このエクササイズの参照ポーズは記録されていません。", "black", 20);
                             m_is_pose_correct = false;
                             m_correct_pose_frames_count = 0;
+                            m_correct_pose_duration_ms = 0; // Reset correct pose duration if no reference
                         }
                         
                         draw_pose_skeleton(frame, output_data);

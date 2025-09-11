@@ -20,7 +20,7 @@ public:
              const Glib::ustring& benefits = "",
              const Glib::ustring& common_mistakes = "",
              const Glib::ustring& variations = "",
-             const Glib::ustring& calories_burned_estimate = "",
+             int calories_burned_estimate = 0, // Changed to int
              const Glib::ustring& updated_at = "")
         : id(id), name(name), image_path(image_path), category(category),
           primary_muscle(primary_muscle), secondary_muscles(secondary_muscles),
@@ -28,7 +28,7 @@ public:
           instructions(instructions), tips(tips), video_url(video_url),
           reps_sets_suggestion(reps_sets_suggestion), benefits(benefits),
           common_mistakes(common_mistakes), variations(variations),
-          calories_burned_estimate(calories_burned_estimate),
+          calories_burned_estimate(calories_burned_estimate), // Changed
           updated_at(updated_at) {}
 
     int get_id() const { return id; }
@@ -46,7 +46,7 @@ public:
     Glib::ustring get_benefits() const { return benefits; }
     Glib::ustring get_common_mistakes() const { return common_mistakes; }
     Glib::ustring get_variations() const { return variations; }
-    Glib::ustring get_calories_burned_estimate() const { return calories_burned_estimate; }
+    int get_calories_burned_estimate() const { return calories_burned_estimate; } // Changed to int
     Glib::ustring get_updated_at() const { return updated_at; }
 
 private:
@@ -65,8 +65,8 @@ private:
     Glib::ustring benefits;
     Glib::ustring common_mistakes;
     Glib::ustring variations;
-    Glib::ustring calories_burned_estimate;
+    int calories_burned_estimate; // Changed to int
     Glib::ustring updated_at;
 };
 
-#endif // EXERCISE_H 
+#endif // EXERCISE_H
