@@ -5,17 +5,16 @@
 
 RegisterWindow::RegisterWindow()
     : main_box(Gtk::Orientation::VERTICAL),
-      form_box(Gtk::Orientation::VERTICAL) {
+      form_grid() { // Changed to Gtk::Grid
     
     set_title("バーチャルエクササイズコーチ - 新規登録");
-    set_default_size(400, 500);
     set_modal(true);
     set_deletable(false);
-    set_resizable(false);
-    
-    // Center the window
-    set_halign(Gtk::Align::CENTER);
-    set_valign(Gtk::Align::CENTER);
+    set_resizable(true); // Ensure it's resizable
+    set_hexpand(true); // Allow the window to expand horizontally
+    set_vexpand(true); // Allow the window to expand vertically
+    set_halign(Gtk::Align::FILL); // Make the window fill available horizontal space
+    set_valign(Gtk::Align::FILL); // Make the window fill available vertical space
     
     // Title
     title_label.set_markup("<big><b>新規登録</b></big>");
@@ -25,104 +24,100 @@ RegisterWindow::RegisterWindow()
     // Form elements
     username_label.set_text("ユーザー名:");
     username_label.set_halign(Gtk::Align::START);
-    username_label.set_margin_start(20);
-    username_label.set_margin_end(20);
     
     username_entry.set_placeholder_text("ユーザー名を入力してください");
-    username_entry.set_margin_start(20);
-    username_entry.set_margin_end(20);
     username_entry.set_margin_bottom(10);
+    username_entry.set_hexpand(true); // Allow entry to expand horizontally
     
     email_label.set_text("メールアドレス:");
     email_label.set_halign(Gtk::Align::START);
-    email_label.set_margin_start(20);
-    email_label.set_margin_end(20);
     
     email_entry.set_placeholder_text("メールアドレスを入力してください");
-    email_entry.set_margin_start(20);
-    email_entry.set_margin_end(20);
     email_entry.set_margin_bottom(10);
+    email_entry.set_hexpand(true); // Allow entry to expand horizontally
     
     password_label.set_text("パスワード:");
     password_label.set_halign(Gtk::Align::START);
-    password_label.set_margin_start(20);
-    password_label.set_margin_end(20);
     
     password_entry.set_placeholder_text("パスワードを入力してください");
     password_entry.set_visibility(false);
-    password_entry.set_margin_start(20);
-    password_entry.set_margin_end(20);
     password_entry.set_margin_bottom(10);
+    password_entry.set_hexpand(true); // Allow entry to expand horizontally
     
     confirm_password_label.set_text("パスワード確認:");
     confirm_password_label.set_halign(Gtk::Align::START);
-    confirm_password_label.set_margin_start(20);
-    confirm_password_label.set_margin_end(20);
     
     confirm_password_entry.set_placeholder_text("パスワードを再入力してください");
     confirm_password_entry.set_visibility(false);
-    confirm_password_entry.set_margin_start(20);
-    confirm_password_entry.set_margin_end(20);
     confirm_password_entry.set_margin_bottom(10);
+    confirm_password_entry.set_hexpand(true); // Allow entry to expand horizontally
     
     first_name_label.set_text("名:");
     first_name_label.set_halign(Gtk::Align::START);
-    first_name_label.set_margin_start(20);
-    first_name_label.set_margin_end(20);
     
     first_name_entry.set_placeholder_text("名を入力してください");
-    first_name_entry.set_margin_start(20);
-    first_name_entry.set_margin_end(20);
     first_name_entry.set_margin_bottom(10);
+    first_name_entry.set_hexpand(true); // Allow entry to expand horizontally
     
     last_name_label.set_text("姓:");
     last_name_label.set_halign(Gtk::Align::START);
-    last_name_label.set_margin_start(20);
-    last_name_label.set_margin_end(20);
     
     last_name_entry.set_placeholder_text("姓を入力してください");
-    last_name_entry.set_margin_start(20);
-    last_name_entry.set_margin_end(20);
     last_name_entry.set_margin_bottom(20);
+    last_name_entry.set_hexpand(true); // Allow entry to expand horizontally
     
     // Buttons
     register_button.set_label("登録");
-    register_button.set_margin_start(20);
-    register_button.set_margin_end(20);
     register_button.set_margin_bottom(10);
+    register_button.set_halign(Gtk::Align::CENTER);
     
     back_button.set_label("戻る");
-    back_button.set_margin_start(20);
-    back_button.set_margin_end(20);
     back_button.set_margin_bottom(10);
+    back_button.set_halign(Gtk::Align::CENTER);
     
     // Status label
     status_label.set_text("");
     status_label.set_halign(Gtk::Align::CENTER);
-    status_label.set_margin_start(20);
-    status_label.set_margin_end(20);
     
     // Layout
-    form_box.set_margin(20);
-    form_box.set_spacing(5);
-    form_box.append(title_label);
-    form_box.append(username_label);
-    form_box.append(username_entry);
-    form_box.append(email_label);
-    form_box.append(email_entry);
-    form_box.append(password_label);
-    form_box.append(password_entry);
-    form_box.append(confirm_password_label);
-    form_box.append(confirm_password_entry);
-    form_box.append(first_name_label);
-    form_box.append(first_name_entry);
-    form_box.append(last_name_label);
-    form_box.append(last_name_entry);
-    form_box.append(register_button);
-    form_box.append(back_button);
-    form_box.append(status_label);
+    form_grid.set_margin(20);
+    form_grid.set_row_spacing(5);
+    form_grid.set_column_spacing(10);
+    form_grid.set_hexpand(true);
+    form_grid.set_vexpand(true);
+    form_grid.set_halign(Gtk::Align::CENTER); // Center the grid within the window
+    form_grid.set_valign(Gtk::Align::CENTER); // Center the grid within the window
+
+    int row = 0;
+    form_grid.attach(title_label, 0, row++, 2, 1); // Title spans 2 columns
+
+    form_grid.attach(first_name_label, 0, row, 1, 1);
+    form_grid.attach(first_name_entry, 1, row++, 1, 1);
+
+    form_grid.attach(last_name_label, 0, row, 1, 1);
+    form_grid.attach(last_name_entry, 1, row++, 1, 1);
+
+    form_grid.attach(username_label, 0, row, 1, 1);
+    form_grid.attach(username_entry, 1, row++, 1, 1);
+
+    form_grid.attach(email_label, 0, row, 1, 1);
+    form_grid.attach(email_entry, 1, row++, 1, 1);
+
+    form_grid.attach(password_label, 0, row, 1, 1);
+    form_grid.attach(password_entry, 1, row++, 1, 1);
+
+    form_grid.attach(confirm_password_label, 0, row, 1, 1);
+    form_grid.attach(confirm_password_entry, 1, row++, 1, 1);
+
+    form_grid.attach(register_button, 0, row++, 2, 1); // Button spans 2 columns
+    form_grid.attach(back_button, 0, row++, 2, 1); // Button spans 2 columns
+    form_grid.attach(status_label, 0, row++, 2, 1); // Status label spans 2 columns
     
-    main_box.append(form_box);
+    main_box.set_hexpand(true);
+    main_box.set_vexpand(true);
+    main_box.set_halign(Gtk::Align::FILL);
+    main_box.set_valign(Gtk::Align::FILL);
+    main_box.append(form_grid); // Append the grid to the main_box
     set_child(main_box);
     
     // Connect signals
@@ -210,4 +205,4 @@ bool RegisterWindow::validate_form() {
     }
     
     return true;
-} 
+}

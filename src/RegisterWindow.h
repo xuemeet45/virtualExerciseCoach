@@ -18,7 +18,7 @@ private:
     
     // UI elements
     Gtk::Box main_box;
-    Gtk::Box form_box;
+    Gtk::Grid form_grid;
     Gtk::Label title_label;
     Gtk::Label username_label;
     Gtk::Entry username_entry;
@@ -37,4 +37,4 @@ private:
     Gtk::Label status_label;
 };
 
-#endif // REGISTERWINDOW_H 
+#endif // REGISTERWINDOW_H
