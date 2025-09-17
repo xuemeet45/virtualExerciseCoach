@@ -81,6 +81,8 @@ private:
     long long m_pose_incorrect_start_time; // Time when the pose first became incorrect (ms)
     const long long GUIDE_REACTIVATION_DELAY_MS = 5000; // Delay before reactivating guide after a correct pose (5 seconds)
     const float JOINT_ERROR_THRESHOLD = 0.10; // Increased threshold for joint inaccuracy (e.g., 0.10 for more leniency)
+
+    std::string m_last_spoken_message; // Store the last spoken message for debouncing
 };
 
 #endif // POSE_DETECTION_WINDOW_H

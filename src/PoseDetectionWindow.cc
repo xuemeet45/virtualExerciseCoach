@@ -94,7 +94,8 @@ PoseDetectionWindow::PoseDetectionWindow(const Exercise& exercise, int exercise_
       m_all_joints_match_spoken_this_cycle(false),
       m_pose_correct_start_time(0), // Initialize new member
       m_pose_guide_active(true), // Pose guide is active by default
-      m_pose_incorrect_start_time(0) { // Initialize new member
+      m_pose_incorrect_start_time(0), // Initialize new member
+      m_last_spoken_message("") { // Initialize new member
     
     set_title("バーチャルエクササイズコーチ - ポーズ検出");
     set_default_size(800, 600);
@@ -436,10 +437,14 @@ bool PoseDetectionWindow::update_frame() {
                                           
                                           // If pose guide is active, speak error messages
                                           if (m_pose_guide_active) {
-                                              if (current_time_ms - m_last_error_spoken_time > SPEAK_DEBOUNCE_MS) {
-                                                  std::string command = "say -v Kyoko \"" + current_error_message.substr(current_error_message.find("/") + 2) + "\" &"; // Speak Japanese part
-                                                  system(command.c_str());
-                                                  m_last_error_spoken_time = current_time_ms;
+                                              std::string jp_error_message = current_error_message.substr(current_error_message.find("/") + 2);
+                                              if (jp_error_message != m_last_spoken_message) { // Only speak if message is different
+                                                  if (current_time_ms - m_last_error_spoken_time > SPEAK_DEBOUNCE_MS) { // And enough time has passed since last *any* error
+                                                      std::string command = "say -v Kyoko \"" + jp_error_message + "\" &"; // Speak Japanese part
+                                                      system(command.c_str());
+                                                      m_last_error_spoken_time = current_time_ms;
+                                                      m_last_spoken_message = jp_error_message;
+                                                  }
                                               }
                                           }
                                       } else {
@@ -459,15 +464,18 @@ bool PoseDetectionWindow::update_frame() {
                                           update_status_label("Great! All joints match. / " + jp_message, "green", 20);
                                           
                                           // Debounce "all joints match" message with a delay
-                                          if (!m_all_joints_match_spoken_this_cycle && 
-                                              (current_time_ms - m_pose_correct_start_time >= POSE_CORRECT_SPEAK_DELAY_MS) &&
-                                              (current_time_ms - m_last_correct_spoken_time > SPEAK_DEBOUNCE_MS)) {
-                                              
-                                              std::string command = "say -v Kyoko \"" + jp_message + "\" &"; // Run in background
-                                              system(command.c_str());
-                                              m_last_correct_spoken_time = current_time_ms;
-                                              m_all_joints_match_spoken_this_cycle = true;
-                                              m_pose_guide_active = false; // Deactivate guide after "Great done"
+                                          if (jp_message != m_last_spoken_message) { // Only speak if message is different
+                                              if (!m_all_joints_match_spoken_this_cycle && 
+                                                  (current_time_ms - m_pose_correct_start_time >= POSE_CORRECT_SPEAK_DELAY_MS) &&
+                                                  (current_time_ms - m_last_correct_spoken_time > SPEAK_DEBOUNCE_MS)) {
+                                                  
+                                                  std::string command = "say -v Kyoko \"" + jp_message + "\" &"; // Run in background
+                                                  system(command.c_str());
+                                                  m_last_correct_spoken_time = current_time_ms;
+                                                  m_last_spoken_message = jp_message;
+                                                  m_all_joints_match_spoken_this_cycle = true;
+                                                  m_pose_guide_active = false; // Deactivate guide after "Great done"
+                                              }
                                           }
                                       } else {
                                           // If recording, clear status label to suppress text feedback
