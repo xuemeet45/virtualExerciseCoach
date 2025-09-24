@@ -45,12 +45,9 @@ private:
     Gtk::Label* username_label;
     Gtk::Label* email_label;
     Gtk::Label* name_label;
-    Gtk::Label* join_date_label;
-    Gtk::Label* last_login_label;
     
     // Statistics section
     Gtk::Label* stats_title;
-    Gtk::Label* total_sessions_label;
     Gtk::Label* total_duration_label;
     Gtk::Label* total_calories_label;
     Gtk::Label* favorite_exercise_label;

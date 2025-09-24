@@ -14,10 +14,7 @@ MyPageWindow::MyPageWindow(Gtk::Window& parent, const User& user) // Accept pare
       username_label(Gtk::make_managed<Gtk::Label>()),
       email_label(Gtk::make_managed<Gtk::Label>()),
       name_label(Gtk::make_managed<Gtk::Label>()),
-      join_date_label(Gtk::make_managed<Gtk::Label>()),
-      last_login_label(Gtk::make_managed<Gtk::Label>()),
       stats_title(Gtk::make_managed<Gtk::Label>("統計")),
-      total_sessions_label(Gtk::make_managed<Gtk::Label>()),
       total_duration_label(Gtk::make_managed<Gtk::Label>()),
       total_calories_label(Gtk::make_managed<Gtk::Label>()),
       favorite_exercise_label(Gtk::make_managed<Gtk::Label>()),
@@ -73,8 +70,6 @@ MyPageWindow::MyPageWindow(Gtk::Window& parent, const User& user) // Accept pare
     add_profile_row("ユーザー名:", username_label, 0);
     add_profile_row("メールアドレス:", email_label, 1);
     add_profile_row("名前:", name_label, 2);
-    add_profile_row("登録日:", join_date_label, 3);
-    add_profile_row("最終ログイン:", last_login_label, 4);
     
     profile_frame_box.append(profile_grid);
     main_box.append(profile_frame_box);
@@ -104,13 +99,11 @@ MyPageWindow::MyPageWindow(Gtk::Window& parent, const User& user) // Accept pare
         stats_grid.attach(*value_label, 1, row, 1, 1);
     };
 
-    total_sessions_label->set_text("0"); // Only value
     total_duration_label->set_text("0分");
     total_calories_label->set_text("0kcal");
     favorite_exercise_label->set_text("なし");
 
-    add_stats_row("総セッション数:", total_sessions_label, 0);
-    add_stats_row("総運動時間:", total_duration_label, 1);
+    add_stats_row("総運動時間:", total_duration_label, 0);
     add_stats_row("総消費カロリー:", total_calories_label, 2);
     add_stats_row("お気に入りエクササイズ:", favorite_exercise_label, 3);
 
@@ -173,8 +166,6 @@ void MyPageWindow::updateUserInfo(const User& user) {
     username_label->set_text(user.get_username());
     email_label->set_text(user.get_email());
     name_label->set_text(user.get_last_name() + " " + user.get_first_name());
-    join_date_label->set_text(user.get_created_at());
-    last_login_label->set_text(user.get_last_login());
     
     refreshStatistics();
 }
@@ -207,7 +198,6 @@ void MyPageWindow::refreshStatistics() {
             return default_val;
         };
 
-        total_sessions_label->set_text(std::to_string(get_int_or_default(stat, "total_sessions")));
         total_duration_label->set_text(std::to_string(get_int_or_default(stat, "total_duration")) + "分");
         total_calories_label->set_text(std::to_string(get_int_or_default(stat, "total_calories")) + "kcal");
     }
